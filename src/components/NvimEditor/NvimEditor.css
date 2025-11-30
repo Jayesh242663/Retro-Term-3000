@@ -1,0 +1,260 @@
+/* NvimEditor - Neovim-style text editor */
+
+.nvim-editor-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--crt-bg, #0d0800);
+  z-index: 150;
+  display: flex;
+  flex-direction: column;
+}
+
+.nvim-editor {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  font-family: 'VT323', monospace;
+  font-size: 1rem;
+  color: var(--crt-text, #ffb000);
+  overflow: hidden;
+}
+
+/* Tab bar */
+.nvim-tabbar {
+  display: flex;
+  background: rgba(0, 0, 0, 0.5);
+  border-bottom: 1px solid var(--crt-text-dim, rgba(255, 176, 0, 0.3));
+  padding: 0;
+  min-height: 24px;
+}
+
+.nvim-tab {
+  padding: 4px 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border-right: 1px solid var(--crt-text-dim, rgba(255, 176, 0, 0.3));
+  color: var(--crt-text-dim, #888);
+}
+
+.nvim-tab.active {
+  background: var(--crt-bg, #0d0800);
+  color: var(--crt-text, #ffb000);
+  border-bottom: 1px solid var(--crt-bg, #0d0800);
+  margin-bottom: -1px;
+}
+
+.nvim-tab-fill {
+  flex: 1;
+}
+
+/* Editor content */
+.nvim-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 4px 0;
+  
+  /* Hide scrollbar */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.nvim-content::-webkit-scrollbar {
+  display: none;
+}
+
+.nvim-line {
+  display: flex;
+  line-height: 1.4;
+  min-height: 1.4em;
+}
+
+.nvim-line.current {
+  background: rgba(255, 176, 0, 0.05);
+}
+
+.nvim-line-number {
+  width: 40px;
+  text-align: right;
+  padding-right: 12px;
+  color: var(--crt-text-dim, #666);
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.nvim-line-number.current {
+  color: var(--crt-text, #ffb000);
+  font-weight: bold;
+}
+
+.nvim-line-number.empty {
+  color: var(--crt-text-dim, #444);
+  text-align: center;
+  padding-right: 12px;
+}
+
+.nvim-line-content {
+  flex: 1;
+  white-space: pre;
+  padding-right: 10px;
+}
+
+.nvim-cursor {
+  background: var(--crt-text, #ffb000);
+  color: var(--crt-bg, #0d0800);
+  animation: nvim-cursor-blink 1s step-end infinite;
+}
+
+.nvim-cursor.insert {
+  background: transparent;
+  color: var(--crt-text, #ffb000);
+  border-left: 2px solid var(--crt-text, #ffb000);
+  animation: nvim-cursor-blink 0.5s step-end infinite;
+  margin-left: -1px;
+}
+
+@keyframes nvim-cursor-blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0.7; }
+}
+
+/* Status line */
+.nvim-statusline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  background: var(--crt-text, #ffb000);
+  color: var(--crt-bg, #0d0800);
+  font-weight: bold;
+  min-height: 24px;
+}
+
+.nvim-mode-indicator {
+  padding: 2px 8px;
+  background: var(--crt-bg, #0d0800);
+  color: var(--crt-text, #ffb000);
+  font-size: 0.85rem;
+}
+
+.nvim-mode-indicator.insert {
+  background: #50fa7b;
+  color: #0d0800;
+}
+
+.nvim-mode-indicator.command {
+  background: #ff79c6;
+  color: #0d0800;
+}
+
+.nvim-mode-indicator.normal {
+  background: var(--crt-bg, #0d0800);
+  color: var(--crt-text, #ffb000);
+}
+
+.nvim-filename {
+  flex: 1;
+}
+
+.nvim-status-message {
+  color: var(--crt-text, #ffb000);
+}
+
+.nvim-filetype {
+  opacity: 0.7;
+}
+
+.nvim-position {
+  padding: 0 8px;
+}
+
+.nvim-percentage {
+  min-width: 40px;
+  text-align: right;
+}
+
+/* Command line */
+.nvim-commandline {
+  padding: 4px 8px;
+  min-height: 24px;
+  background: var(--crt-bg, #0d0800);
+  border-top: 1px solid var(--crt-text-dim, rgba(255, 176, 0, 0.3));
+}
+
+.nvim-command-input {
+  color: var(--crt-text, #ffb000);
+}
+
+.nvim-command-cursor {
+  animation: command-cursor-blink 0.5s step-end infinite;
+}
+
+@keyframes command-cursor-blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.nvim-insert-msg {
+  color: var(--crt-text, #ffb000);
+  font-weight: bold;
+}
+
+.nvim-help-hint {
+  color: var(--crt-text-dim, #666);
+  font-size: 0.9rem;
+}
+
+/* Syntax highlighting classes */
+.nvim-keyword {
+  color: #ff79c6;
+}
+
+.nvim-string {
+  color: #f1fa8c;
+}
+
+.nvim-comment {
+  color: #6272a4;
+  font-style: italic;
+}
+
+.nvim-function {
+  color: #50fa7b;
+}
+
+.nvim-number {
+  color: #bd93f9;
+}
+
+.nvim-header {
+  color: var(--crt-text, #ffb000);
+  font-weight: bold;
+  text-shadow: 0 0 8px var(--crt-glow, rgba(255, 176, 0, 0.6));
+}
+
+.nvim-label {
+  color: #8be9fd;
+}
+
+.nvim-value {
+  color: #f8f8f2;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .nvim-editor {
+    font-size: 0.85rem;
+  }
+  
+  .nvim-line-number {
+    width: 30px;
+    padding-right: 8px;
+  }
+  
+  .nvim-statusline {
+    font-size: 0.8rem;
+    flex-wrap: wrap;
+  }
+}

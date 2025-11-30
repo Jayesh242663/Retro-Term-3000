@@ -1,0 +1,151 @@
+/* Retro Cursor Styles */
+
+/* Hide default cursor only inside the CRT screen */
+.crt-screen,
+.crt-screen *,
+.crt-content,
+.crt-content * {
+  cursor: none !important;
+}
+
+/* Cursor container - positioned relative to parent */
+.retro-cursor-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+  overflow: hidden;
+}
+
+/* Main cursor container */
+.retro-cursor {
+  position: absolute;
+  pointer-events: none;
+  z-index: 99999;
+  transform: translate(-2px, -2px);
+  transition: transform 0.05s ease-out;
+}
+
+.retro-cursor.clicking {
+  transform: translate(-2px, -2px) scale(0.85);
+}
+
+/* SVG cursor styling */
+.retro-cursor-svg {
+  display: block;
+  filter: drop-shadow(0 0 2px var(--crt-glow, rgba(255, 176, 0, 0.8)));
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.cursor-fill {
+  fill: var(--crt-text, #ffb000);
+}
+
+.cursor-outline {
+  stroke: var(--crt-bg, #0d0800);
+  stroke-width: 1px;
+}
+
+/* Phosphor glow effect */
+.retro-cursor-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 30px;
+  height: 30px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(
+    circle,
+    var(--crt-glow, rgba(255, 176, 0, 0.4)) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+  opacity: 0.6;
+  animation: cursor-glow-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes cursor-glow-pulse {
+  0%, 100% { opacity: 0.4; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 0.7; transform: translate(-50%, -50%) scale(1.1); }
+}
+
+/* Trail effect */
+.retro-cursor-trail {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: var(--crt-text, #ffb000);
+  pointer-events: none;
+  z-index: 99998;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 4px var(--crt-glow, rgba(255, 176, 0, 0.6));
+  image-rendering: pixelated;
+}
+
+/* Click effect */
+.retro-cursor.clicking .retro-cursor-glow {
+  opacity: 1;
+  animation: cursor-click 0.15s ease-out;
+}
+
+@keyframes cursor-click {
+  0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+}
+
+/* Green theme cursor */
+[data-theme="green"] .cursor-fill {
+  fill: var(--crt-text, #33ff33);
+}
+
+[data-theme="green"] .retro-cursor-svg {
+  filter: drop-shadow(0 0 2px var(--crt-glow, rgba(51, 255, 51, 0.8)));
+}
+
+[data-theme="green"] .retro-cursor-glow {
+  background: radial-gradient(
+    circle,
+    var(--crt-glow, rgba(51, 255, 51, 0.4)) 0%,
+    transparent 70%
+  );
+}
+
+[data-theme="green"] .retro-cursor-trail {
+  background: var(--crt-text, #33ff33);
+  box-shadow: 0 0 4px var(--crt-glow, rgba(51, 255, 51, 0.6));
+}
+
+/* Scanline effect on cursor (subtle) */
+.retro-cursor::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 1px,
+    rgba(0, 0, 0, 0.1) 1px,
+    rgba(0, 0, 0, 0.1) 2px
+  );
+  pointer-events: none;
+  opacity: 0.3;
+}
+
+/* Mobile - hide custom cursor */
+@media (hover: none) and (pointer: coarse) {
+  .retro-cursor,
+  .retro-cursor-trail {
+    display: none !important;
+  }
+  
+  *, *::before, *::after {
+    cursor: auto !important;
+  }
+}

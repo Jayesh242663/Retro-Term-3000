@@ -1,0 +1,330 @@
+/* ============================================
+   CRT Monitor Effects - Retro Portfolio
+   ============================================ */
+
+/* CSS Custom Properties for theming */
+:root {
+  /* Amber Theme (Default) */
+  --crt-bg: #0d0800;
+  --crt-text: #ffb000;
+  --crt-text-dim: #cc8800;
+  --crt-glow: rgba(255, 176, 0, 0.6);
+  --crt-glow-intense: rgba(255, 176, 0, 0.9);
+  --crt-scanline: rgba(0, 0, 0, 0.15);
+  --crt-bezel: #2a2a2a;
+  --crt-bezel-dark: #1a1a1a;
+  --crt-bezel-light: #3a3a3a;
+}
+
+/* Green Theme */
+[data-theme="green"] {
+  --crt-bg: #001100;
+  --crt-text: #33ff33;
+  --crt-text-dim: #22aa22;
+  --crt-glow: rgba(51, 255, 51, 0.6);
+  --crt-glow-intense: rgba(51, 255, 51, 0.9);
+  --crt-scanline: rgba(0, 0, 0, 0.18);
+}
+
+/* ============================================
+   CRT Monitor Frame
+   ============================================ */
+
+.crt-monitor {
+  position: relative;
+  background: linear-gradient(145deg, var(--crt-bezel-light), var(--crt-bezel-dark));
+  border-radius: 30px;
+  padding: 40px;
+  box-shadow: 
+    0 0 0 4px var(--crt-bezel),
+    0 0 0 8px var(--crt-bezel-dark),
+    0 20px 60px rgba(0, 0, 0, 0.6),
+    inset 0 2px 4px rgba(255, 255, 255, 0.1);
+  max-width: 1000px;
+  margin: 20px auto;
+}
+
+.crt-monitor::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 6px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    var(--crt-bezel-light) 20%, 
+    var(--crt-bezel-light) 80%, 
+    transparent 100%
+  );
+  border-radius: 3px;
+}
+
+/* Power LED indicator */
+.crt-monitor::after {
+  content: '';
+  position: absolute;
+  bottom: 15px;
+  right: 50px;
+  width: 10px;
+  height: 10px;
+  background: var(--crt-text);
+  border-radius: 50%;
+  box-shadow: 0 0 10px var(--crt-glow), 0 0 20px var(--crt-glow);
+  animation: led-pulse 2s ease-in-out infinite;
+}
+
+@keyframes led-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* ============================================
+   CRT Screen
+   ============================================ */
+
+.crt-screen {
+  position: relative;
+  background: var(--crt-bg);
+  border-radius: 20px;
+  overflow: hidden;
+  min-height: 500px;
+  box-shadow: 
+    inset 0 0 80px rgba(0, 0, 0, 0.8),
+    inset 0 0 20px rgba(0, 0, 0, 0.6);
+}
+
+/* Screen curvature effect */
+.crt-screen::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 0%,
+    transparent 60%,
+    rgba(0, 0, 0, 0.3) 100%
+  );
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Scanlines overlay */
+.crt-screen::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    var(--crt-scanline) 0px,
+    var(--crt-scanline) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  pointer-events: none;
+  z-index: 11;
+  animation: scanline-scroll 10s linear infinite;
+}
+
+@keyframes scanline-scroll {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(3px); }
+}
+
+/* ============================================
+   Screen Content Area
+   ============================================ */
+
+.crt-content {
+  position: relative;
+  z-index: 5;
+  padding: 20px;
+  color: var(--crt-text);
+  font-family: 'VT323', monospace;
+  font-size: 1.2rem;
+  line-height: 1.4;
+  animation: flicker 0.15s infinite;
+}
+
+@keyframes flicker {
+  0% { opacity: 0.97; }
+  50% { opacity: 1; }
+  100% { opacity: 0.98; }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .crt-content {
+    animation: none;
+  }
+  .crt-screen::after {
+    animation: none;
+  }
+}
+
+/* ============================================
+   Text Effects
+   ============================================ */
+
+.crt-text {
+  color: var(--crt-text);
+  text-shadow: 
+    0 0 5px var(--crt-glow),
+    0 0 10px var(--crt-glow),
+    0 0 15px var(--crt-glow);
+}
+
+.crt-text-dim {
+  color: var(--crt-text-dim);
+  text-shadow: 0 0 5px var(--crt-glow);
+}
+
+.crt-text-bright {
+  color: var(--crt-text);
+  text-shadow: 
+    0 0 5px var(--crt-glow-intense),
+    0 0 15px var(--crt-glow-intense),
+    0 0 30px var(--crt-glow);
+  animation: text-glow 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes text-glow {
+  from {
+    text-shadow: 
+      0 0 5px var(--crt-glow),
+      0 0 10px var(--crt-glow);
+  }
+  to {
+    text-shadow: 
+      0 0 10px var(--crt-glow-intense),
+      0 0 20px var(--crt-glow-intense),
+      0 0 40px var(--crt-glow);
+  }
+}
+
+/* ============================================
+   Cursor Blink
+   ============================================ */
+
+.crt-cursor {
+  display: inline-block;
+  width: 0.6em;
+  height: 1.2em;
+  background: var(--crt-text);
+  animation: cursor-blink 1s step-end infinite;
+  vertical-align: text-bottom;
+  box-shadow: 0 0 5px var(--crt-glow), 0 0 10px var(--crt-glow);
+}
+
+@keyframes cursor-blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+/* ============================================
+   Boot/Power Animation
+   ============================================ */
+
+.crt-boot {
+  animation: crt-power-on 1.5s ease-out forwards;
+}
+
+@keyframes crt-power-on {
+  0% {
+    filter: brightness(0);
+    transform: scaleY(0.01) scaleX(0.8);
+  }
+  20% {
+    filter: brightness(1.5);
+    transform: scaleY(0.01) scaleX(0.8);
+  }
+  40% {
+    filter: brightness(1);
+    transform: scaleY(1) scaleX(0.8);
+  }
+  60% {
+    transform: scaleY(1) scaleX(1);
+  }
+  80% {
+    filter: brightness(1.2);
+  }
+  100% {
+    filter: brightness(1);
+    transform: scaleY(1) scaleX(1);
+  }
+}
+
+.crt-power-off {
+  animation: crt-power-off 0.5s ease-in forwards;
+}
+
+@keyframes crt-power-off {
+  0% {
+    filter: brightness(1);
+    transform: scaleY(1) scaleX(1);
+  }
+  50% {
+    filter: brightness(1.5);
+    transform: scaleY(0.01) scaleX(1);
+  }
+  100% {
+    filter: brightness(0);
+    transform: scaleY(0.01) scaleX(0.01);
+  }
+}
+
+/* ============================================
+   Glitch Effect (optional)
+   ============================================ */
+
+.crt-glitch {
+  animation: glitch 0.3s linear;
+}
+
+@keyframes glitch {
+  0% { transform: translate(0); }
+  20% { transform: translate(-2px, 2px); }
+  40% { transform: translate(-2px, -2px); }
+  60% { transform: translate(2px, 2px); }
+  80% { transform: translate(2px, -2px); }
+  100% { transform: translate(0); }
+}
+
+/* ============================================
+   Noise/Static overlay (optional)
+   ============================================ */
+
+.crt-noise {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  opacity: 0.03;
+  pointer-events: none;
+  z-index: 12;
+}
+
+/* ============================================
+   Utility Classes
+   ============================================ */
+
+.pixel-font {
+  font-family: 'Press Start 2P', cursive;
+}
+
+.mono-font {
+  font-family: 'Share Tech Mono', 'VT323', monospace;
+}
+
+.terminal-font {
+  font-family: 'VT323', monospace;
+}

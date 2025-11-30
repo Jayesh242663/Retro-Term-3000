@@ -1,0 +1,309 @@
+/* Boot Screen Styles - Realistic BIOS Boot */
+
+.boot-screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  overflow: hidden;
+  padding: 20px;
+}
+
+.boot-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Scanlines */
+.boot-scanlines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.15) 0px,
+    rgba(0, 0, 0, 0.15) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Terminal-style boot display */
+.boot-terminal {
+  position: relative;
+  z-index: 5;
+  font-family: 'VT323', 'Courier New', monospace;
+  font-size: 1.1rem;
+  line-height: 1.4;
+  color: var(--crt-text, #aaaaaa);
+  white-space: pre;
+  overflow-y: scroll;
+  max-height: 100%;
+  
+  /* Hide scrollbar for all browsers */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+/* Hide scrollbar for Chrome, Safari, Opera */
+.boot-terminal::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* Boot line styles */
+.boot-line {
+  opacity: 0;
+  animation: typeIn 0.05s ease forwards;
+}
+
+@keyframes typeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Header - BIOS title */
+.boot-header {
+  color: var(--crt-text, #ffb000);
+  font-weight: bold;
+  font-size: 1.2rem;
+  text-shadow: 0 0 10px var(--crt-glow, rgba(255, 176, 0, 0.6));
+}
+
+/* Copyright */
+.boot-copyright {
+  color: var(--crt-text-dim, #888888);
+  font-size: 1rem;
+}
+
+/* Info lines */
+.boot-info {
+  color: var(--crt-text, #cccccc);
+}
+
+/* Labels */
+.boot-label {
+  color: var(--crt-text, #ffffff);
+}
+
+/* Memory counter */
+.boot-memory {
+  color: var(--crt-text, #ffb000);
+  font-weight: bold;
+  display: inline;
+}
+
+.memory-spinner {
+  display: inline-block;
+  animation: spin-chars 0.2s linear infinite;
+}
+
+@keyframes spin-chars {
+  0% { content: '|'; }
+  25% { content: '/'; }
+  50% { content: '-'; }
+  75% { content: '\\'; }
+}
+
+.boot-memory-ok {
+  color: #00ff00;
+  font-weight: bold;
+  text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+}
+
+/* Process messages with loading animation */
+.boot-process {
+  color: var(--crt-text, #ffff00);
+}
+
+.loading-dots {
+  display: inline-block;
+  min-width: 24px;
+  text-align: left;
+}
+
+/* Success messages */
+.boot-success {
+  color: #00ff00;
+  text-shadow: 0 0 5px rgba(0, 255, 0, 0.4);
+}
+
+/* Border ASCII art */
+.boot-border {
+  color: var(--crt-text, #ffb000);
+  text-shadow: 0 0 8px var(--crt-glow, rgba(255, 176, 0, 0.5));
+}
+
+/* OK status lines (systemd style) */
+.boot-ok {
+  color: var(--crt-text, #cccccc);
+  display: flex;
+  align-items: center;
+}
+
+.ok-bracket {
+  color: #888;
+}
+
+.ok-text {
+  color: #00ff00;
+  font-weight: bold;
+  text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+}
+
+.ok-spinner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+}
+
+.spinner-icon {
+  color: #00ff00;
+  animation: checkmark-pop 0.3s ease forwards;
+}
+
+@keyframes checkmark-pop {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.3);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.ok-message {
+  color: var(--crt-text, #cccccc);
+}
+
+.boot-ok::before {
+  content: '';
+}
+
+/* Final message */
+.boot-final {
+  color: var(--crt-text, #00ff00);
+  font-weight: bold;
+  text-shadow: 
+    0 0 10px rgba(0, 255, 0, 0.8),
+    0 0 20px rgba(0, 255, 0, 0.4);
+  animation: pulse 0.5s ease-in-out 2;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* Blank lines */
+.boot-blank {
+  height: 1.4em;
+}
+
+/* Blinking cursor */
+.boot-cursor {
+  color: var(--crt-text, #ffb000);
+  opacity: 0;
+  transition: opacity 0.1s;
+  text-shadow: 0 0 8px var(--crt-glow, rgba(255, 176, 0, 0.8));
+}
+
+.boot-cursor.visible {
+  opacity: 1;
+}
+
+/* Flicker effect */
+.boot-screen::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: transparent;
+  pointer-events: none;
+  animation: screenFlicker 0.15s infinite;
+  z-index: 20;
+}
+
+@keyframes screenFlicker {
+  0% { opacity: 0.98; }
+  50% { opacity: 1; }
+  100% { opacity: 0.97; }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .boot-terminal {
+    font-size: 0.85rem;
+  }
+  
+  .boot-header {
+    font-size: 1rem;
+  }
+  
+  .boot-screen {
+    padding: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .boot-terminal {
+    font-size: 0.7rem;
+  }
+  
+  .boot-screen {
+    padding: 10px;
+  }
+}
+
+/* Theme support - Green theme */
+[data-theme="green"] .boot-header,
+[data-theme="green"] .boot-border {
+  color: #33ff33;
+  text-shadow: 0 0 10px rgba(51, 255, 51, 0.6);
+}
+
+[data-theme="green"] .boot-memory {
+  color: #33ff33;
+}
+
+[data-theme="green"] .boot-cursor {
+  color: #33ff33;
+  text-shadow: 0 0 8px rgba(51, 255, 51, 0.8);
+}
+
+[data-theme="green"] .boot-process {
+  color: #ffff33;
+}
+
+/* Amber theme (default) */
+[data-theme="amber"] .boot-ok {
+  color: #cccccc;
+}
+
+[data-theme="amber"] .boot-success,
+[data-theme="amber"] .boot-memory-ok,
+[data-theme="amber"] .boot-final {
+  color: #00ff00;
+}

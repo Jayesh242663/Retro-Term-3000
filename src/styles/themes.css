@@ -1,0 +1,55 @@
+/* ============================================
+   Theme Variables & Switcher Styles
+   ============================================ */
+
+/* Theme transition */
+* {
+  transition: 
+    background-color 0.3s ease,
+    color 0.3s ease,
+    text-shadow 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+/* Theme switcher button */
+.theme-switcher {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+  background: var(--crt-bezel);
+  border: 2px solid var(--crt-text);
+  border-radius: 8px;
+  padding: 10px 15px;
+  color: var(--crt-text);
+  font-family: 'VT323', monospace;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 
+    0 0 10px var(--crt-glow),
+    inset 0 0 5px rgba(0, 0, 0, 0.5);
+  transition: all 0.2s ease;
+}
+
+.theme-switcher:hover {
+  background: var(--crt-text);
+  color: var(--crt-bg);
+  box-shadow: 
+    0 0 20px var(--crt-glow),
+    0 0 40px var(--crt-glow);
+}
+
+.theme-switcher:active {
+  transform: scale(0.95);
+}
+
+/* Theme indicator */
+.theme-indicator {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 8px;
+  background: var(--crt-text);
+  box-shadow: 0 0 5px var(--crt-glow);
+}
