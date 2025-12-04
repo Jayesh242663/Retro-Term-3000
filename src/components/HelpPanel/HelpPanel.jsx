@@ -426,7 +426,7 @@ const HelpPanel = ({ isOpen, onClose }) => {
         </p>
         <div className="github-link">
           <span className="link-icon">◈</span>
-          <span>github.com/Jayesh242663/Retro-Term-3000</span>
+          <span>https://github.com/Jayesh242663/Retro-Term-3000</span>
         </div>
       </div>
 

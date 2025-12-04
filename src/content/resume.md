@@ -1,6 +1,6 @@
 Jayesh Channe
 
-jayeshchanne9@gmail.com | linkedin.com/in/jayeshchanne | github.com/Jayesh242663
+jayeshchanne9@gmail.com | https://linkedin.com/in/jayeshchanne | https://github.com/Jayesh242663
 
 Professional Summary
 Results-driven software engineer with 3+ years of learning experience in developing scalable web and desktop
