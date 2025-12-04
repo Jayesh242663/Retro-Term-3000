@@ -1,10 +1,97 @@
-import { useState, useEffect, useRef } from 'react';
-import { playKeySound, playEnterSound, playErrorSound, initAudio, playProgressBeep } from '../../utils/sounds';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { playKeySound, playEnterSound, playErrorSound, playProgressBeep } from '../../utils/sounds';
 import FileExplorer from '../FileExplorer';
 import NvimEditor from '../NvimEditor';
+import HelpPanel from '../HelpPanel';
 import resumeMd from '../../content/resume.md?raw';
 import { getFileContent, saveFile, fileExists, normalizePath, getFileType, getFileName, listFiles, getFileStructure, createDirectory, directoryExists, deleteFile, deleteDirectory, moveFile, copyFile, getFileSize, countLines, countWords, searchInFile, getHead, getTail, appendToFile, getDirectory } from '../../utils/fileSystem';
 import './Terminal.css';
+
+// Utility function to convert URLs in text to clickable links
+const linkifyText = (text) => {
+  if (typeof text !== 'string') return text;
+  
+  // Regex to match URLs (http, https, and email addresses)
+  const urlRegex = /(https?:\/\/[^\s<>"{}|\\^`[\]]+)|(mailto:[^\s<>"{}|\\^`[\]]+)|([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
+  
+  const parts = [];
+  let lastIndex = 0;
+  let match;
+  
+  while ((match = urlRegex.exec(text)) !== null) {
+    // Add text before the match
+    if (match.index > lastIndex) {
+      parts.push(text.slice(lastIndex, match.index));
+    }
+    
+    const url = match[0];
+    let href = url;
+    
+    // If it's an email without mailto:, add it
+    if (match[3] && !url.startsWith('mailto:')) {
+      href = `mailto:${url}`;
+    }
+    
+    // Add the clickable link
+    parts.push(
+      <a 
+        key={match.index} 
+        href={href} 
+        target="_blank" 
+        rel="noopener noreferrer"
+        className="terminal-link"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {url}
+      </a>
+    );
+    
+    lastIndex = match.index + url.length;
+  }
+  
+  // Add remaining text
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex));
+  }
+  
+  return parts.length > 0 ? parts : text;
+};
+
+// Process content to make links clickable
+const processContentWithLinks = (content) => {
+  if (typeof content !== 'string') return content;
+  
+  // Split by lines and process each line
+  const lines = content.split('\n');
+  return lines.map((line, index) => (
+    <span key={index}>
+      {linkifyText(line)}
+      {index < lines.length - 1 && '\n'}
+    </span>
+  ));
+};
+
+// Available commands for tab auto-completion
+const AVAILABLE_COMMANDS = [
+  // Portfolio commands
+  'help', 'about', 'resume', 'skills', 'projects', 'contact', 'experience',
+  // File system commands
+  'ls', 'dir', 'cd', 'cat', 'pwd', 'mkdir', 'touch', 'rm', 'mv', 'cp', 'tree',
+  // Editor commands
+  'nvim', 'vim', 'nano', 'edit',
+  // Text processing
+  'head', 'tail', 'wc', 'grep', 'find', 'echo',
+  // System commands
+  'clear', 'cls', 'history', 'whoami', 'hostname', 'uname', 'date', 'uptime',
+  'df', 'free', 'ps', 'top', 'htop', 'id', 'env', 'printenv', 'which', 'man',
+  // Networking commands
+  'ping', 'ifconfig', 'ip', 'netstat', 'curl', 'wget', 'traceroute', 'nslookup',
+  'dig', 'host', 'arp', 'route', 'ss', 'telnet', 'ftp', 'ssh',
+  // Fun commands
+  'neofetch', 'screenfetch', 'cowsay', 'fortune', 'cal', 'hack',
+  // Session commands  
+  'exit', 'logout', 'shutdown', 'poweroff', 'halt', 'sudo', 'theme',
+];
 
 const Terminal = ({ onCommand, onShutdown, initialOutput = [], welcomeMessage = true }) => {
   const [history, setHistory] = useState(initialOutput);
@@ -22,12 +109,20 @@ const Terminal = ({ onCommand, onShutdown, initialOutput = [], welcomeMessage = 
   const [focusedMenuIndex, setFocusedMenuIndex] = useState(-1); // -1 means input is focused
   const [showFileExplorer, setShowFileExplorer] = useState(false);
   const [showNvimEditor, setShowNvimEditor] = useState(false);
+  const [showHelpPanel, setShowHelpPanel] = useState(false);
   const [editorFile, setEditorFile] = useState(null);
   const [editorContent, setEditorContent] = useState('');
   const [fileSystemVersion, setFileSystemVersion] = useState(0); // Force re-render on file changes
   const [currentDir, setCurrentDir] = useState('~'); // Current working directory
   const [cursorPosition, setCursorPosition] = useState(0); // Track cursor position for block cursor
   const [cursorLeft, setCursorLeft] = useState(0); // Actual pixel offset for cursor
+  const [isMobile, setIsMobile] = useState(false); // Track if device is mobile
+  const [isTypingOutput, setIsTypingOutput] = useState(false); // Track if output is being typed
+  const [typingLines, setTypingLines] = useState([]); // Lines being typed out
+  const [currentTypingLine, setCurrentTypingLine] = useState(0); // Current line being typed
+  const [tabCompletionIndex, setTabCompletionIndex] = useState(-1); // Track tab completion cycling
+  const [tabCompletionMatches, setTabCompletionMatches] = useState([]); // Matching commands for tab
+  const [lastTabInput, setLastTabInput] = useState(''); // Track input when tab was first pressed
   // note: interactive confirmations removed; deletions run immediately
   const inputRef = useRef(null);
   const terminalRef = useRef(null);
@@ -36,6 +131,78 @@ const Terminal = ({ onCommand, onShutdown, initialOutput = [], welcomeMessage = 
   const measureRef = useRef(null);
 
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+  // Type out output line by line with retro effect
+  const typeOutputLineByLine = useCallback(async (content, lineDelay = 80) => {
+    // If content is a React element, extract text or just display it
+    if (typeof content !== 'string') {
+      // For React elements (like <pre>), add them directly
+      setHistory(prev => [...prev, { type: 'output', content }]);
+      return;
+    }
+    
+    // Split content into lines
+    const lines = content.split('\n');
+    
+    // Skip animation for very short outputs (1-2 lines)
+    if (lines.length <= 2) {
+      setHistory(prev => [...prev, { type: 'output', content: <pre className="typing-output">{processContentWithLinks(content)}</pre> }]);
+      return;
+    }
+    
+    setIsTypingOutput(true);
+    
+    // Add lines one by one
+    let displayedContent = '';
+    for (let i = 0; i < lines.length; i++) {
+      displayedContent += (i > 0 ? '\n' : '') + lines[i];
+      
+      // Update history with current progress (include typing cursor on last line)
+      const currentContent = displayedContent;
+      setHistory(prev => {
+        // Remove previous typing entry if exists
+        const filtered = prev.filter(item => !item.isTyping);
+        return [...filtered, { 
+          type: 'output', 
+          content: (
+            <pre className="typing-output">
+              {processContentWithLinks(currentContent)}
+              <span className="terminal-typing-indicator"></span>
+            </pre>
+          ),
+          isTyping: true 
+        }];
+      });
+      
+      // Delay between lines - faster for longer outputs
+      const adjustedDelay = lines.length > 30 ? lineDelay / 2 : lines.length > 15 ? lineDelay * 0.75 : lineDelay;
+      await sleep(adjustedDelay);
+    }
+    
+    // Mark as complete (no longer typing, remove cursor)
+    setHistory(prev => {
+      const filtered = prev.filter(item => !item.isTyping);
+      return [...filtered, { 
+        type: 'output', 
+        content: <pre className="typing-output">{processContentWithLinks(content)}</pre>
+      }];
+    });
+    
+    setIsTypingOutput(false);
+  }, []);
+
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      const isSmallScreen = window.innerWidth <= 768;
+      setIsMobile(isTouchDevice && isSmallScreen);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Update cursor pixel position when text or cursor position changes
   useEffect(() => {
@@ -127,7 +294,7 @@ const Terminal = ({ onCommand, onShutdown, initialOutput = [], welcomeMessage = 
 
   // Focus input after loading completes
   useEffect(() => {
-    if (!isLoading && inputRef.current) {
+    if (!isLoading && !isTypingOutput && inputRef.current) {
       inputRef.current.focus();
       // Ensure scroll is at bottom after command completes
       if (contentRef.current) {
@@ -136,13 +303,29 @@ const Terminal = ({ onCommand, onShutdown, initialOutput = [], welcomeMessage = 
         }, 50);
       }
     }
-  }, [isLoading]);
+  }, [isLoading, isTypingOutput]);
 
   // Focus input on click anywhere in terminal
-  const handleTerminalClick = () => {
-    initAudio(); // Initialize audio on first click
-    inputRef.current?.focus();
-  };
+  const handleTerminalClick = useCallback((e) => {
+    // Don't focus input if clicking on interactive elements
+    if (e.target.closest('.terminal-menu-item') || 
+        e.target.closest('.file-explorer') || 
+        e.target.closest('.nvim-editor')) {
+      return;
+    }
+    
+    // Focus the input
+    if (inputRef.current) {
+      inputRef.current.focus();
+      
+      // On mobile, scroll to make input visible after keyboard opens
+      if (isMobile) {
+        setTimeout(() => {
+          inputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 300);
+      }
+    }
+  }, [isMobile]);
 
   // Handle command submission
   const handleSubmit = async (e) => {
@@ -173,26 +356,16 @@ const Terminal = ({ onCommand, onShutdown, initialOutput = [], welcomeMessage = 
       return;
     }
 
-    // help - show commands (instant, no typing animation)
+    // help - open the help panel
     if (baseCommand === 'help') {
-      const helpLines = [
-        'help      - Show available commands',
-        'skills    - List my technical skills',
-        'projects  - View my projects',
-        'experience- Show work history',
-        'contact   - Get contact information',
-        'about     - Display information about me',
-        'clear     - Clear the terminal',
-      ];
-
-      setHistory(prev => [...prev, { type: 'output', content: <pre className="typing-output">{helpLines.join('\n')}</pre> }]);
+      setShowHelpPanel(true);
       return;
     }
 
     // about - type out the about.txt content with typing animation
     if (baseCommand === 'about' || command === 'about me') {
       const fileContent = getFileContent('~/about.txt') || `Name: Your Name\nRole: Developer\n\nUse 'help' to see commands.`;
-      setHistory(prev => [...prev, { type: 'output', content: <pre className="typing-output">{fileContent}</pre> }]);
+      await typeOutputLineByLine(fileContent);
       return;
     }
 
@@ -200,7 +373,7 @@ const Terminal = ({ onCommand, onShutdown, initialOutput = [], welcomeMessage = 
     if (baseCommand === 'resume') {
       const mem = getFileContent('~/resume.md');
       const contentToShow = mem !== null ? mem : resumeMd;
-      setHistory(prev => [...prev, { type: 'output', content: <pre className="cat-output">{contentToShow}</pre> }]);
+      await typeOutputLineByLine(contentToShow);
       return;
     }
 
@@ -349,7 +522,7 @@ const Terminal = ({ onCommand, onShutdown, initialOutput = [], welcomeMessage = 
       }
       
       if (allContent.length > 0) {
-        setHistory(prev => [...prev, { type: 'output', content: <pre className="cat-output">{allContent.join('\n')}</pre> }]);
+        await typeOutputLineByLine(allContent.join('\n'));
       }
       return;
     }
@@ -662,7 +835,7 @@ const Terminal = ({ onCommand, onShutdown, initialOutput = [], welcomeMessage = 
       const filePath = resolvePath(fileArg);
       const content = getHead(filePath, n);
       if (content !== null) {
-        setHistory(prev => [...prev, { type: 'output', content: <pre className="cat-output">{content}</pre> }]);
+        await typeOutputLineByLine(content);
       } else {
         setHistory(prev => [...prev, { type: 'output', content: `head: cannot open '${fileArg}' for reading: No such file or directory` }]);
       }
@@ -695,7 +868,7 @@ const Terminal = ({ onCommand, onShutdown, initialOutput = [], welcomeMessage = 
       const filePath = resolvePath(fileArg);
       const content = getTail(filePath, n);
       if (content !== null) {
-        setHistory(prev => [...prev, { type: 'output', content: <pre className="cat-output">{content}</pre> }]);
+        await typeOutputLineByLine(content);
       } else {
         setHistory(prev => [...prev, { type: 'output', content: `tail: cannot open '${fileArg}' for reading: No such file or directory` }]);
       }
@@ -777,7 +950,7 @@ const Terminal = ({ onCommand, onShutdown, initialOutput = [], welcomeMessage = 
         } else {
           // Without -n, just show matching lines
           const output = matches.map(m => m.content).join('\n');
-          setHistory(prev => [...prev, { type: 'output', content: <pre className="cat-output">{output}</pre> }]);
+          await typeOutputLineByLine(output);
         }
       }
       return;
@@ -831,7 +1004,7 @@ const Terminal = ({ onCommand, onShutdown, initialOutput = [], welcomeMessage = 
         return;
       } else {
         const output = matches.map(f => f.path.replace('~', '.')).join('\n');
-        setHistory(prev => [...prev, { type: 'output', content: <pre className="cat-output">{output}</pre> }]);
+        await typeOutputLineByLine(output);
       }
       return;
     }
@@ -845,7 +1018,7 @@ const Terminal = ({ onCommand, onShutdown, initialOutput = [], welcomeMessage = 
       const histOutput = commandHistory.map((cmd, i) => 
         `${(i + 1).toString().padStart(5)}  ${cmd}`
       ).join('\n');
-      setHistory(prev => [...prev, { type: 'output', content: <pre className="cat-output">{histOutput}</pre> }]);
+      await typeOutputLineByLine(histOutput);
       return;
     }
 
@@ -866,7 +1039,7 @@ const Terminal = ({ onCommand, onShutdown, initialOutput = [], welcomeMessage = 
 /dev/sda1      102400000 8234567  94165433   9% /
 tmpfs            4096000       0   4096000   0% /dev/shm
 /dev/sda2       51200000 2345678  48854322   5% /home`;
-      setHistory(prev => [...prev, { type: 'output', content: <pre className="cat-output">{dfOutput}</pre> }]);
+      await typeOutputLineByLine(dfOutput);
       return;
     }
 
@@ -875,7 +1048,7 @@ tmpfs            4096000       0   4096000   0% /dev/shm
       const freeOutput = `              total        used        free      shared  buff/cache   available
 Mem:        8192000     2345678     3456789      123456     2389533     5432100
 Swap:       2097152           0     2097152`;
-      setHistory(prev => [...prev, { type: 'output', content: <pre className="cat-output">{freeOutput}</pre> }]);
+      await typeOutputLineByLine(freeOutput);
       return;
     }
 
@@ -886,7 +1059,7 @@ Swap:       2097152           0     2097152`;
    42 pts/0    00:00:01 terminal
   101 pts/0    00:00:00 bash
   102 pts/0    00:00:00 ps`;
-      setHistory(prev => [...prev, { type: 'output', content: <pre className="cat-output">{psOutput}</pre> }]);
+      await typeOutputLineByLine(psOutput);
       return;
     }
 
@@ -902,7 +1075,7 @@ MiB Mem:   8000.0 total,   3456.8 free,   2345.7 used,   2197.5 buff/cache
     1 root      20   0   65432   4321   3210 S   0.0   0.1   0:00.10 init
 
 (Press q to exit - simulated)`;
-      setHistory(prev => [...prev, { type: 'output', content: <pre className="cat-output">{topOutput}</pre> }]);
+      await typeOutputLineByLine(topOutput);
       return;
     }
 
@@ -922,7 +1095,7 @@ PATH=/usr/local/bin:/usr/bin:/bin
 LANG=en_US.UTF-8
 PWD=/home/guest
 EDITOR=nvim`;
-      setHistory(prev => [...prev, { type: 'output', content: <pre className="cat-output">{envOutput}</pre> }]);
+      await typeOutputLineByLine(envOutput);
       return;
     }
 
@@ -962,7 +1135,7 @@ EDITOR=nvim`;
       
       const page = manPages[args[0]];
       if (page) {
-        setHistory(prev => [...prev, { type: 'output', content: <pre className="cat-output">{page}</pre> }]);
+        await typeOutputLineByLine(page);
       } else {
         setHistory(prev => [...prev, { type: 'output', content: `No manual entry for ${args[0]}` }]);
       }
@@ -1068,7 +1241,7 @@ EDITOR=nvim`;
                      CPU: Intel 486 @ 66MHz
                      Memory: 2345 MiB / 8192 MiB
 `;
-      setHistory(prev => [...prev, { type: 'output', content: <pre className="cat-output neofetch">{neofetchOutput}</pre> }]);
+      await typeOutputLineByLine(neofetchOutput, 50);
       return;
     }
 
@@ -1086,7 +1259,7 @@ EDITOR=nvim`;
                 ||----w |
                 ||     ||
 `;
-      setHistory(prev => [...prev, { type: 'output', content: <pre className="cat-output">{cowOutput}</pre> }]);
+      await typeOutputLineByLine(cowOutput, 40);
       return;
     }
 
@@ -1117,7 +1290,161 @@ Su Mo Tu We Th Fr Sa
 12 13 14 15 16 17 18
 19 20 21 22 23 24 25
 26 27 28 29 30`;
-      setHistory(prev => [...prev, { type: 'output', content: <pre className="cat-output">{calOutput}</pre> }]);
+      await typeOutputLineByLine(calOutput, 60);
+      return;
+    }
+
+    // Networking commands
+    if (baseCommand === 'ping') {
+      const host = args[0] || 'localhost';
+      const pingOutput = `PING ${host} (192.168.1.${Math.floor(Math.random() * 254) + 1}) 56(84) bytes of data.
+64 bytes from ${host}: icmp_seq=1 ttl=64 time=${(Math.random() * 10 + 0.5).toFixed(2)} ms
+64 bytes from ${host}: icmp_seq=2 ttl=64 time=${(Math.random() * 10 + 0.5).toFixed(2)} ms
+64 bytes from ${host}: icmp_seq=3 ttl=64 time=${(Math.random() * 10 + 0.5).toFixed(2)} ms
+64 bytes from ${host}: icmp_seq=4 ttl=64 time=${(Math.random() * 10 + 0.5).toFixed(2)} ms
+
+--- ${host} ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 3003ms
+rtt min/avg/max/mdev = ${(Math.random() * 2 + 0.3).toFixed(3)}/${(Math.random() * 5 + 2).toFixed(3)}/${(Math.random() * 10 + 5).toFixed(3)}/${(Math.random() * 2 + 0.5).toFixed(3)} ms`;
+      await typeOutputLineByLine(pingOutput, 80);
+      return;
+    }
+
+    if (baseCommand === 'ifconfig' || (baseCommand === 'ip' && args[0] === 'addr')) {
+      const ifconfigOutput = `eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.42  netmask 255.255.255.0  broadcast 192.168.1.255
+        inet6 fe80::1234:5678:abcd:ef01  prefixlen 64  scopeid 0x20<link>
+        ether de:ad:be:ef:ca:fe  txqueuelen 1000  (Ethernet)
+        RX packets 847293  bytes 1073741824 (1.0 GiB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 523847  bytes 536870912 (512.0 MiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1000  (Local Loopback)
+        RX packets 12847  bytes 1048576 (1.0 MiB)
+        TX packets 12847  bytes 1048576 (1.0 MiB)`;
+      await typeOutputLineByLine(ifconfigOutput, 40);
+      return;
+    }
+
+    if (baseCommand === 'ip' && !args[0]) {
+      setHistory(prev => [...prev, { type: 'output', content: 'Usage: ip [ OPTIONS ] OBJECT { COMMAND | help }\nOBJECT := { addr | link | route | neigh }' }]);
+      return;
+    }
+
+    if (baseCommand === 'netstat' || baseCommand === 'ss') {
+      const netstatOutput = `Active Internet connections (servers and established)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN
+tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN
+tcp        0      0 0.0.0.0:443             0.0.0.0:*               LISTEN
+tcp        0      0 127.0.0.1:3000          0.0.0.0:*               LISTEN
+tcp        0      0 192.168.1.42:22         192.168.1.100:52341     ESTABLISHED
+tcp        0      0 192.168.1.42:443        203.0.113.42:8080       ESTABLISHED
+udp        0      0 0.0.0.0:68              0.0.0.0:*
+udp        0      0 0.0.0.0:5353            0.0.0.0:*`;
+      await typeOutputLineByLine(netstatOutput, 50);
+      return;
+    }
+
+    if (baseCommand === 'curl' || baseCommand === 'wget') {
+      const url = args[0];
+      if (!url) {
+        setHistory(prev => [...prev, { type: 'output', content: `${baseCommand}: missing URL\nUsage: ${baseCommand} [options] <url>` }]);
+        return;
+      }
+      const curlOutput = `  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100  1256  100  1256    0     0  12560      0 --:--:-- --:--:-- --:--:-- 12560
+<!DOCTYPE html>
+<html>
+<head><title>Response</title></head>
+<body>Connection successful to ${url}</body>
+</html>`;
+      await typeOutputLineByLine(curlOutput, 60);
+      return;
+    }
+
+    if (baseCommand === 'traceroute') {
+      const host = args[0] || 'example.com';
+      const tracerouteOutput = `traceroute to ${host} (93.184.216.34), 30 hops max, 60 byte packets
+ 1  gateway (192.168.1.1)  1.234 ms  1.123 ms  1.089 ms
+ 2  10.0.0.1 (10.0.0.1)  5.432 ms  5.321 ms  5.234 ms
+ 3  isp-router.net (203.0.113.1)  12.345 ms  12.234 ms  12.123 ms
+ 4  core-router.net (198.51.100.1)  18.765 ms  18.654 ms  18.543 ms
+ 5  ${host} (93.184.216.34)  24.321 ms  24.210 ms  24.099 ms`;
+      await typeOutputLineByLine(tracerouteOutput, 100);
+      return;
+    }
+
+    if (baseCommand === 'nslookup' || baseCommand === 'dig' || baseCommand === 'host') {
+      const host = args[0] || 'example.com';
+      const ip = `${Math.floor(Math.random() * 223) + 1}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`;
+      if (baseCommand === 'nslookup') {
+        const output = `Server:    8.8.8.8\nAddress:   8.8.8.8#53\n\nNon-authoritative answer:\nName:   ${host}\nAddress: ${ip}`;
+        await typeOutputLineByLine(output, 60);
+      } else if (baseCommand === 'dig') {
+        const output = `; <<>> DiG 9.16.1-Ubuntu <<>> ${host}\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: ${Math.floor(Math.random() * 65535)}\n;; ANSWER SECTION:\n${host}.          300     IN      A       ${ip}\n\n;; Query time: ${Math.floor(Math.random() * 50) + 10} msec\n;; SERVER: 8.8.8.8#53(8.8.8.8)\n;; MSG SIZE  rcvd: 56`;
+        await typeOutputLineByLine(output, 50);
+      } else {
+        const output = `${host} has address ${ip}`;
+        setHistory(prev => [...prev, { type: 'output', content: output }]);
+      }
+      return;
+    }
+
+    if (baseCommand === 'arp') {
+      const arpOutput = `Address                  HWtype  HWaddress           Flags Mask            Iface
+192.168.1.1              ether   aa:bb:cc:dd:ee:ff   C                     eth0
+192.168.1.100            ether   11:22:33:44:55:66   C                     eth0
+192.168.1.254            ether   de:ad:be:ef:00:01   C                     eth0`;
+      await typeOutputLineByLine(arpOutput, 50);
+      return;
+    }
+
+    if (baseCommand === 'route') {
+      const routeOutput = `Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+default         192.168.1.1     0.0.0.0         UG    100    0        0 eth0
+192.168.1.0     0.0.0.0         255.255.255.0   U     100    0        0 eth0`;
+      await typeOutputLineByLine(routeOutput, 50);
+      return;
+    }
+
+    if (baseCommand === 'telnet') {
+      const host = args[0];
+      const port = args[1] || '23';
+      if (!host) {
+        setHistory(prev => [...prev, { type: 'output', content: 'telnet: usage: telnet host [port]' }]);
+        return;
+      }
+      const telnetOutput = `Trying ${host}...\nConnected to ${host}.\nEscape character is '^]'.\n\nRetroOS 24.04 LTS\nLogin: ^C\nConnection closed by foreign host.`;
+      await typeOutputLineByLine(telnetOutput, 100);
+      return;
+    }
+
+    if (baseCommand === 'ftp') {
+      const host = args[0];
+      if (!host) {
+        setHistory(prev => [...prev, { type: 'output', content: 'ftp: usage: ftp host' }]);
+        return;
+      }
+      const ftpOutput = `Connected to ${host}.\n220 RetroFTP Server ready.\nName (${host}:guest): anonymous\n331 Anonymous login ok, send your email as password.\nPassword: \n230 Anonymous access granted.\nRemote system type is UNIX.\nUsing binary mode to transfer files.\nftp> quit\n221 Goodbye.`;
+      await typeOutputLineByLine(ftpOutput, 80);
+      return;
+    }
+
+    if (baseCommand === 'ssh') {
+      const target = args[0];
+      if (!target) {
+        setHistory(prev => [...prev, { type: 'output', content: 'usage: ssh [-options] [user@]hostname' }]);
+        return;
+      }
+      const sshOutput = `The authenticity of host '${target}' can't be established.\nED25519 key fingerprint is SHA256:${btoa(target).substring(0, 43)}.\nAre you sure you want to continue connecting (yes/no)? ^C`;
+      await typeOutputLineByLine(sshOutput, 60);
       return;
     }
 
@@ -1245,7 +1572,8 @@ Su Mo Tu We Th Fr Sa
     if (onCommand) {
       const result = onCommand(command);
       if (result) {
-        setHistory(prev => [...prev, { type: 'output', content: result }]);
+        // Use line-by-line typing for text output
+        await typeOutputLineByLine(result);
       }
     }
   };
@@ -1279,18 +1607,169 @@ Su Mo Tu We Th Fr Sa
     }
   };
 
+  // Tab auto-completion for commands and file paths
+  const handleTabCompletion = useCallback(() => {
+    const input = currentInput.trim();
+    
+    // If input is empty, do nothing (or could show all commands)
+    if (!input) {
+      // Show available commands hint
+      setHistory(prev => [...prev, { 
+        type: 'output', 
+        content: 'Type a command and press Tab to auto-complete. Type "help" for available commands.' 
+      }]);
+      return;
+    }
+
+    const parts = input.split(' ');
+    const isFirstWord = parts.length === 1;
+    const currentWord = parts[parts.length - 1].toLowerCase();
+    const commandPrefix = parts.slice(0, -1).join(' ');
+    
+    // Check if this is a new tab completion cycle or continuing
+    const isNewTabCycle = input !== lastTabInput;
+    
+    if (isFirstWord) {
+      // Complete commands
+      let matches;
+      if (isNewTabCycle) {
+        matches = AVAILABLE_COMMANDS.filter(cmd => cmd.startsWith(currentWord));
+        setTabCompletionMatches(matches);
+        setTabCompletionIndex(0);
+        setLastTabInput(input);
+      } else {
+        matches = tabCompletionMatches;
+      }
+      
+      if (matches.length === 0) {
+        // No matches
+        playErrorSound();
+        return;
+      }
+      
+      if (matches.length === 1) {
+        // Single match - complete it
+        setCurrentInput(matches[0] + ' ');
+        setCursorPosition(matches[0].length + 1);
+        setTabCompletionMatches([]);
+        setTabCompletionIndex(-1);
+        setLastTabInput('');
+      } else {
+        // Multiple matches - cycle through or show options
+        const nextIndex = isNewTabCycle ? 0 : (tabCompletionIndex + 1) % matches.length;
+        setTabCompletionIndex(nextIndex);
+        setCurrentInput(matches[nextIndex]);
+        setCursorPosition(matches[nextIndex].length);
+        
+        // Show all matches on first tab
+        if (isNewTabCycle) {
+          setHistory(prev => [...prev, { 
+            type: 'output', 
+            content: `Matches: ${matches.join('  ')}` 
+          }]);
+        }
+      }
+    } else {
+      // Complete file paths for commands that take file arguments
+      const fileCommands = ['cat', 'cd', 'ls', 'rm', 'mv', 'cp', 'touch', 'mkdir', 'nvim', 'vim', 'nano', 'edit', 'head', 'tail', 'wc', 'grep'];
+      const baseCmd = parts[0].toLowerCase();
+      
+      if (fileCommands.includes(baseCmd)) {
+        // Get files in current directory for completion
+        try {
+          const files = listFiles(currentDir);
+          const fileMatches = files.filter(f => f.name.toLowerCase().startsWith(currentWord.toLowerCase()));
+          
+          if (fileMatches.length === 0) {
+            playErrorSound();
+            return;
+          }
+          
+          if (fileMatches.length === 1) {
+            // Single match
+            const match = fileMatches[0];
+            const completedPath = match.name + (match.isDirectory ? '/' : ' ');
+            setCurrentInput(commandPrefix + ' ' + completedPath);
+            setCursorPosition((commandPrefix + ' ' + completedPath).length);
+          } else {
+            // Multiple matches - find common prefix
+            const names = fileMatches.map(f => f.name);
+            let commonPrefix = names[0];
+            for (let i = 1; i < names.length; i++) {
+              while (!names[i].startsWith(commonPrefix)) {
+                commonPrefix = commonPrefix.slice(0, -1);
+              }
+            }
+            
+            if (commonPrefix.length > currentWord.length) {
+              // Complete to common prefix
+              setCurrentInput(commandPrefix + ' ' + commonPrefix);
+              setCursorPosition((commandPrefix + ' ' + commonPrefix).length);
+            }
+            
+            // Show all matches
+            const matchDisplay = fileMatches.map(f => f.isDirectory ? f.name + '/' : f.name).join('  ');
+            setHistory(prev => [...prev, { 
+              type: 'output', 
+              content: matchDisplay 
+            }]);
+          }
+        } catch (e) {
+          // Directory doesn't exist or other error
+          playErrorSound();
+        }
+      }
+    }
+  }, [currentInput, currentDir, lastTabInput, tabCompletionIndex, tabCompletionMatches]);
+
+  // Reset tab completion state when input changes (not from tab)
+  useEffect(() => {
+    // Only reset if input changed and it's not from a tab completion
+    if (currentInput !== lastTabInput && tabCompletionMatches.length > 0) {
+      // Check if current input is one of the matches (means it was from tab)
+      if (!tabCompletionMatches.includes(currentInput) && !tabCompletionMatches.some(m => currentInput.startsWith(m + ' '))) {
+        setTabCompletionMatches([]);
+        setTabCompletionIndex(-1);
+        setLastTabInput('');
+      }
+    }
+  }, [currentInput, lastTabInput, tabCompletionMatches]);
+
   // Handle global keyboard events for menu navigation
   useEffect(() => {
     const handleGlobalKeyDown = (e) => {
-      // Handle Tab key globally
+      // Handle Tab key for auto-completion when input is focused
       if (e.key === 'Tab') {
         e.preventDefault();
         playKeySound();
-        if (focusedMenuIndex === -1) {
-          // Currently on input, move to first menu item
-          setFocusedMenuIndex(0);
-          inputRef.current?.blur();
-        } else {
+        
+        // If input is empty, navigate through menu tabs
+        if (!currentInput.trim()) {
+          if (focusedMenuIndex === -1) {
+            // Start menu navigation from first item
+            setFocusedMenuIndex(0);
+            inputRef.current?.blur();
+          } else {
+            // Move to next menu item or back to input
+            const nextIndex = focusedMenuIndex + 1;
+            if (nextIndex >= menuItems.length) {
+              setFocusedMenuIndex(-1);
+              inputRef.current?.focus();
+            } else {
+              setFocusedMenuIndex(nextIndex);
+            }
+          }
+          return;
+        }
+        
+        // If input has content and is focused, do auto-completion
+        if (focusedMenuIndex === -1 && document.activeElement === inputRef.current) {
+          handleTabCompletion();
+          return;
+        }
+        
+        // Handle menu navigation when menu is focused
+        if (focusedMenuIndex >= 0) {
           // Move to next menu item or back to input
           const nextIndex = focusedMenuIndex + 1;
           if (nextIndex >= menuItems.length) {
@@ -1324,22 +1803,96 @@ Su Mo Tu We Th Fr Sa
 
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [focusedMenuIndex]);
+  }, [focusedMenuIndex, handleTabCompletion, currentInput]);
 
-  // Handle menu item click
+  // Handle menu item click - proper tab switching with panel management
   const handleMenuClick = (menuItem) => {
     const menuName = menuItem.toLowerCase();
+    playEnterSound();
+    
+    // Close all panels first for clean transitions
+    const closeAllPanels = () => {
+      setShowFileExplorer(false);
+      setShowNvimEditor(false);
+      setShowHelpPanel(false);
+      setEditorFile(null);
+      setEditorContent('');
+    };
     
     if (menuName === 'file') {
-      // Open file explorer
-      setShowFileExplorer(true);
+      // Toggle file explorer - if already open, close it
+      if (showFileExplorer) {
+        setShowFileExplorer(false);
+        inputRef.current?.focus();
+      } else {
+        closeAllPanels();
+        // Small delay for smooth transition
+        setTimeout(() => setShowFileExplorer(true), 50);
+      }
       setFocusedMenuIndex(-1);
       return;
     }
     
-    // Add menu action to history
-    setHistory(prev => [...prev, { type: 'output', content: `[Menu] ${menuItem} clicked - Feature coming soon!` }]);
-    // Return focus to input after menu action
+    if (menuName === 'help') {
+      // Toggle help panel - if already open, close it
+      if (showHelpPanel) {
+        setShowHelpPanel(false);
+        inputRef.current?.focus();
+      } else {
+        closeAllPanels();
+        // Small delay for smooth transition
+        setTimeout(() => setShowHelpPanel(true), 50);
+      }
+      setFocusedMenuIndex(-1);
+      return;
+    }
+    
+    if (menuName === 'view') {
+      // View menu - close any open panels and return to terminal
+      closeAllPanels();
+      setHistory(prev => [...prev, { type: 'output', content: '[View] Returned to terminal view' }]);
+      setFocusedMenuIndex(-1);
+      inputRef.current?.focus();
+      return;
+    }
+    
+    if (menuName === 'link') {
+      // Link menu - show available links
+      closeAllPanels();
+      setHistory(prev => [...prev, { 
+        type: 'output', 
+        content: `╔══════════════════════════════════════╗
+║           QUICK LINKS                ║
+╠══════════════════════════════════════╣
+║  Type 'contact' for social links     ║
+║  Type 'projects' for project repos   ║
+║  Type 'resume' for my CV             ║
+╚══════════════════════════════════════╝` 
+      }]);
+      setFocusedMenuIndex(-1);
+      inputRef.current?.focus();
+      return;
+    }
+    
+    if (menuName === 'setup') {
+      // Setup menu - show theme options
+      closeAllPanels();
+      setHistory(prev => [...prev, { 
+        type: 'output', 
+        content: `╔══════════════════════════════════════╗
+║            SETUP OPTIONS             ║
+╠══════════════════════════════════════╣
+║  Type 'theme' to change color theme  ║
+║  Available: amber, green, blue, red  ║
+║             white, matrix, hacker    ║
+╚══════════════════════════════════════╝` 
+      }]);
+      setFocusedMenuIndex(-1);
+      inputRef.current?.focus();
+      return;
+    }
+    
+    // Fallback for unknown menu items
     setFocusedMenuIndex(-1);
     inputRef.current?.focus();
   };
@@ -1353,7 +1906,7 @@ Su Mo Tu We Th Fr Sa
       
       const result = onCommand(command);
       if (result) {
-        setHistory(prev => [...prev, { type: 'output', content: result }]);
+        setHistory(prev => [...prev, { type: 'output', content: <pre className="typing-output">{processContentWithLinks(result)}</pre> }]);
       }
     }
     inputRef.current?.focus();
@@ -1391,15 +1944,25 @@ Su Mo Tu We Th Fr Sa
     inputRef.current?.focus();
   };
 
+  // Determine which panel is active
+  const activePanel = showHelpPanel ? 'help' : showNvimEditor ? 'nvim' : showFileExplorer ? 'file' : null;
+
   return (
-    <div className="terminal" onClick={handleTerminalClick} ref={terminalRef}>
-      {/* Terminal Menu Bar */}
+    <div 
+      className={`terminal ${isMobile ? 'terminal-mobile' : ''}`} 
+      onClick={handleTerminalClick} 
+      ref={terminalRef}
+    >
+      {/* Terminal Menu Bar - Always visible */}
       <div className="terminal-menubar">
         {menuItems.map((item, index) => (
           <span
             key={item}
             ref={el => menuRefs.current[index] = el}
-            className={`terminal-menu-item ${focusedMenuIndex === index ? 'focused' : ''}`}
+            className={`terminal-menu-item ${focusedMenuIndex === index ? 'focused' : ''} ${
+              (item === 'Help' && showHelpPanel) || 
+              (item === 'File' && (showFileExplorer || showNvimEditor)) ? 'active' : ''
+            }`}
             onClick={() => handleMenuClick(item)}
             tabIndex={0}
           >
@@ -1408,8 +1971,10 @@ Su Mo Tu We Th Fr Sa
         ))}
       </div>
 
-      {/* Terminal Content */}
-      <div className="terminal-content" ref={contentRef}>
+      {/* Main content area - fixed height container */}
+      <div className="terminal-main-area">
+        {/* Terminal Content */}
+        <div className="terminal-content" ref={contentRef}>
         {/* Welcome message */}
         {showWelcome && history.length === 0 && (
           <div className="terminal-welcome">
@@ -1430,13 +1995,18 @@ Su Mo Tu We Th Fr Sa
 `}
             </pre>
             <p className="terminal-subtitle">PORTFOLIO SYSTEM v1.0.0</p>
-            <p className="terminal-hint">Type <span className="highlight">'help'</span> for available commands</p>
+            <p className="terminal-hint">
+              {isMobile 
+                ? <>Tap below and type <span className="highlight">'help'</span></>
+                : <>Type <span className="highlight">'help'</span> for available commands</>
+              }
+            </p>
           </div>
         )}
 
         {/* History output */}
         {history.map((item, index) => (
-          <div key={index} className={`terminal-line ${item.type}`}>
+          <div key={item.id || index} className={`terminal-line ${item.type}`}>
             {item.type === 'input' ? (
               <div className="terminal-input-line">
                 <span className="terminal-prompt">guest@portfolio:{item.dir || '~'}$</span>
@@ -1516,7 +2086,7 @@ Su Mo Tu We Th Fr Sa
               autoFocus
               spellCheck={false}
               autoComplete="off"
-              disabled={isLoading}
+              disabled={isLoading || isTypingOutput}
             />
             <span 
               className="terminal-block-cursor"
@@ -1526,31 +2096,41 @@ Su Mo Tu We Th Fr Sa
         </form>
       </div>
 
+        {/* File Explorer - inside main area */}
+        <FileExplorer 
+          isOpen={showFileExplorer}
+          onClose={handleCloseFileExplorer}
+          onFileSelect={handleFileSelect}
+          onOpenEditor={handleOpenEditor}
+          key={fileSystemVersion}
+          fileSystemVersion={fileSystemVersion}
+        />
+
+        {/* Nvim Editor - inside main area */}
+        <NvimEditor
+          isOpen={showNvimEditor}
+          onClose={handleCloseNvimEditor}
+          file={editorFile}
+          content={editorContent}
+          onSave={handleSaveFile}
+        />
+
+        {/* Help Panel - inside main area */}
+        <HelpPanel
+          isOpen={showHelpPanel}
+          onClose={() => {
+            setShowHelpPanel(false);
+            inputRef.current?.focus();
+          }}
+        />
+      </div>
+
       {/* Status bar */}
       <div className="terminal-statusbar">
-        <span>{isLoading ? 'PROCESSING...' : 'READY'}</span>
+        <span>{isLoading ? 'PROCESSING...' : isTypingOutput ? 'TYPING...' : 'READY'}</span>
         <span>UTF-8</span>
         <span>LN 1, COL 1</span>
       </div>
-
-      {/* File Explorer */}
-      <FileExplorer 
-        isOpen={showFileExplorer}
-        onClose={handleCloseFileExplorer}
-        onFileSelect={handleFileSelect}
-        onOpenEditor={handleOpenEditor}
-        key={fileSystemVersion}
-        fileSystemVersion={fileSystemVersion}
-      />
-
-      {/* Nvim Editor */}
-      <NvimEditor
-        isOpen={showNvimEditor}
-        onClose={handleCloseNvimEditor}
-        file={editorFile}
-        content={editorContent}
-        onSave={handleSaveFile}
-      />
     </div>
   );
 };

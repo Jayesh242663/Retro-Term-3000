@@ -2,8 +2,11 @@ import { useState, useCallback, useEffect } from 'react';
 import CRTMonitor from './components/CRTMonitor';
 import Terminal from './components/Terminal';
 import { useTheme } from './components/ThemeSwitcher';
-import { playThemeSwitchSound, playErrorSound, toggleAmbientNoise, isAmbientNoisePlaying, startAmbientNoise, stopAmbientNoise, initAudio, playCRTOnSound, playCRTOffSound } from './utils/sounds';
+import { playThemeSwitchSound, playErrorSound, toggleAmbientNoise, isAmbientNoisePlaying, startAmbientNoise, stopAmbientNoise, initAudio, playCRTOnSound, playCRTOffSound, playClickSound, toggleAllSounds } from './utils/sounds';
 import BootScreen from './components/BootScreen';
+import AboutPanel from './components/AboutPanel';
+import CheatSheet from './components/CheatSheet';
+import MobileWarning from './components/MobileWarning';
 import { 
   portfolioData, 
   commandOutputs,
@@ -22,6 +25,47 @@ function App() {
   const [showTerminal, setShowTerminal] = useState(false);
   const [audioStarted, setAudioStarted] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  
+  // Panel collapse and fullscreen states
+  const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
+  const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isScreenOnly, setIsScreenOnly] = useState(false);
+
+  // Toggle panel handlers
+  const toggleLeftPanel = () => {
+    playClickSound();
+    setLeftPanelCollapsed(prev => !prev);
+  };
+
+  const toggleRightPanel = () => {
+    playClickSound();
+    setRightPanelCollapsed(prev => !prev);
+  };
+
+  const toggleFullscreen = () => {
+    playClickSound();
+    setIsFullscreen(prev => !prev);
+    if (isScreenOnly) setIsScreenOnly(false);
+  };
+
+  const toggleScreenOnly = () => {
+    playClickSound();
+    setIsScreenOnly(prev => !prev);
+    if (isFullscreen) setIsFullscreen(false);
+  };
+
+  // Exit fullscreen/screen-only with Escape key
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        if (isScreenOnly) setIsScreenOnly(false);
+        else if (isFullscreen) setIsFullscreen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isFullscreen, isScreenOnly]);
 
   // Handle power button press - start boot sequence
   const handlePowerOn = () => {
@@ -108,8 +152,9 @@ function App() {
       case 'sound':
       case 'audio':
       case 'noise':
-        const isPlaying = toggleAmbientNoise();
-        return `Background CRT hum: ${isPlaying ? 'ON' : 'OFF'}`;
+      case 'mute':
+        const soundsOn = toggleAllSounds();
+        return `All sounds: ${soundsOn ? 'ON' : 'OFF'}`;
       
       case 'clear':
       case 'cls':
@@ -209,13 +254,55 @@ Repository:
     }
   }, [toggleTheme]);
 
+  // Determine layout class based on panel states
+  const layoutClass = isScreenOnly
+    ? 'screen-only-mode'
+    : isFullscreen 
+      ? 'fullscreen-mode' 
+      : (leftPanelCollapsed && rightPanelCollapsed) 
+        ? 'both-collapsed' 
+        : leftPanelCollapsed 
+          ? 'left-collapsed' 
+          : rightPanelCollapsed 
+            ? 'right-collapsed' 
+            : '';
+
   return (
-    <div className="app">
+    <div className={`app ${layoutClass}`}>
+      {/* Mobile Warning - shows error on small screens */}
+      <MobileWarning />
+      
       {/* Background grid effect */}
       <div className="background-grid" />
       
+      {/* Left side - About Panel */}
+      {!isFullscreen && !isScreenOnly && (
+        <AboutPanel 
+          isCollapsed={leftPanelCollapsed} 
+          onToggle={toggleLeftPanel} 
+        />
+      )}
+      
+      {/* View toggle buttons */}
+      <div className="view-toggle-buttons">
+        <button 
+          className={`view-toggle-btn ${isFullscreen ? 'active' : ''}`}
+          onClick={toggleFullscreen}
+          title={isFullscreen ? 'Exit Fullscreen (Esc)' : 'Fullscreen Monitor'}
+        >
+          {isFullscreen ? '⊡' : '⛶'}
+        </button>
+        <button 
+          className={`view-toggle-btn ${isScreenOnly ? 'active' : ''}`}
+          onClick={toggleScreenOnly}
+          title={isScreenOnly ? 'Exit Screen Mode (Esc)' : 'Screen Only Mode'}
+        >
+          {isScreenOnly ? '⊟' : '▣'}
+        </button>
+      </div>
+      
       {/* Main CRT Monitor - always visible */}
-      <CRTMonitor onPowerOn={handlePowerOn} onPowerOff={handlePowerOff}>
+      <CRTMonitor onPowerOn={handlePowerOn} onPowerOff={handlePowerOff} isScreenOnly={isScreenOnly}>
         {/* Boot Screen - shows inside monitor after power on */}
         {showBootScreen && (
           <BootScreen onComplete={handleBootComplete} duration={4000} />
@@ -230,6 +317,14 @@ Repository:
           />
         )}
       </CRTMonitor>
+
+      {/* Right side - Cheat Sheet */}
+      {!isFullscreen && !isScreenOnly && (
+        <CheatSheet 
+          isCollapsed={rightPanelCollapsed} 
+          onToggle={toggleRightPanel} 
+        />
+      )}
 
       {/* Attribution */}
       

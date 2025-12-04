@@ -2,12 +2,39 @@
 let audioContext = null;
 let ambientNoiseNodes = null;
 let isAmbientPlaying = false;
+let isSoundMuted = false; // Global mute state
 
 const getAudioContext = () => {
   if (!audioContext) {
     audioContext = new (window.AudioContext || window.webkitAudioContext)();
   }
   return audioContext;
+};
+
+// Check if sounds are muted
+export const isMuted = () => isSoundMuted;
+
+// Mute all sounds
+export const muteAllSounds = () => {
+  isSoundMuted = true;
+  stopAmbientNoise();
+};
+
+// Unmute all sounds
+export const unmuteAllSounds = () => {
+  isSoundMuted = false;
+  startAmbientNoise();
+};
+
+// Toggle all sounds
+export const toggleAllSounds = () => {
+  if (isSoundMuted) {
+    unmuteAllSounds();
+    return true; // sounds are now ON
+  } else {
+    muteAllSounds();
+    return false; // sounds are now OFF
+  }
 };
 
 // Resume audio context on user interaction (required by browsers)
@@ -24,7 +51,7 @@ export const initAudio = () => {
 
 // Background ambient CRT/computer hum noise
 export const startAmbientNoise = () => {
-  if (isAmbientPlaying) return;
+  if (isAmbientPlaying || isSoundMuted) return;
   
   try {
     const ctx = getAudioContext();
@@ -156,6 +183,7 @@ export const isAmbientNoisePlaying = () => isAmbientPlaying;
 
 // Typing/keystroke sound - mechanical keyboard click
 export const playKeySound = () => {
+  if (isSoundMuted) return;
   try {
     const ctx = getAudioContext();
     
@@ -195,6 +223,7 @@ export const playKeySound = () => {
 
 // Command enter/submit sound - realistic relay click
 export const playEnterSound = () => {
+  if (isSoundMuted) return;
   try {
     const ctx = getAudioContext();
     
@@ -238,6 +267,7 @@ export const playEnterSound = () => {
 
 // Error sound - realistic terminal error buzz/static
 export const playErrorSound = () => {
+  if (isSoundMuted) return;
   try {
     const ctx = getAudioContext();
     
@@ -277,6 +307,7 @@ export const playErrorSound = () => {
 
 // Boot up sound - realistic HDD spin-up and seek sounds
 export const playBootSound = () => {
+  if (isSoundMuted) return;
   try {
     const ctx = getAudioContext();
     
@@ -311,6 +342,7 @@ export const playBootSound = () => {
 
 // Boot complete sound - realistic POST beep (single tone like old BIOSes)
 export const playBootCompleteSound = () => {
+  if (isSoundMuted) return;
   try {
     const ctx = getAudioContext();
     
@@ -343,6 +375,7 @@ export const playBootCompleteSound = () => {
 
 // CRT power on sound - realistic degauss/power surge
 export const playCRTOnSound = () => {
+  if (isSoundMuted) return;
   try {
     const ctx = getAudioContext();
     
@@ -381,6 +414,7 @@ export const playCRTOnSound = () => {
 
 // Beep for loading progress - realistic HDD seek/click
 export const playProgressBeep = () => {
+  if (isSoundMuted) return;
   try {
     const ctx = getAudioContext();
     
@@ -414,8 +448,9 @@ export const playProgressBeep = () => {
   }
 };
 
-// CRT power off sound - realistic discharge/collapse
+// CRT power off sound - realistic discharge/collapse (always plays, even when muted)
 export const playCRTOffSound = () => {
+  // Note: This sound always plays regardless of mute state for power off feedback
   try {
     const ctx = getAudioContext();
     
@@ -456,6 +491,7 @@ export const playCRTOffSound = () => {
 
 // Theme switch sound - realistic toggle switch click
 export const playThemeSwitchSound = () => {
+  if (isSoundMuted) return;
   try {
     const ctx = getAudioContext();
     
@@ -491,6 +527,44 @@ export const playThemeSwitchSound = () => {
     
     noiseSource.start(ctx.currentTime);
     noiseSource.stop(ctx.currentTime + 0.05);
+  } catch (e) {
+    console.log('Audio not available');
+  }
+};
+
+// Click sound - for UI button interactions
+export const playClickSound = () => {
+  if (isSoundMuted) return;
+  try {
+    const ctx = getAudioContext();
+    
+    // Short, subtle click for UI buttons
+    const bufferSize = ctx.sampleRate * 0.03;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    
+    // Quick click
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.08));
+    }
+    
+    const noiseSource = ctx.createBufferSource();
+    noiseSource.buffer = buffer;
+    
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(3000, ctx.currentTime);
+    filter.Q.setValueAtTime(1.5, ctx.currentTime);
+    
+    const gainNode = ctx.createGain();
+    gainNode.gain.setValueAtTime(0.2, ctx.currentTime);
+    
+    noiseSource.connect(filter);
+    filter.connect(gainNode);
+    gainNode.connect(ctx.destination);
+    
+    noiseSource.start(ctx.currentTime);
+    noiseSource.stop(ctx.currentTime + 0.03);
   } catch (e) {
     console.log('Audio not available');
   }

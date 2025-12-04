@@ -1,4 +1,4 @@
-/* Boot Screen Styles - Realistic BIOS Boot */
+/* Boot Screen Styles - Realistic Linux Boot */
 
 .boot-screen {
   position: relative;
@@ -43,170 +43,233 @@
   position: relative;
   z-index: 5;
   font-family: 'VT323', 'Courier New', monospace;
-  font-size: 1.1rem;
-  line-height: 1.4;
-  color: var(--crt-text, #aaaaaa);
-  white-space: pre;
+  font-size: 1rem;
+  line-height: 1.35;
+  color: #aaaaaa;
+  white-space: pre-wrap;
   overflow-y: scroll;
   max-height: 100%;
   
-  /* Hide scrollbar for all browsers */
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
-/* Hide scrollbar for Chrome, Safari, Opera */
 .boot-terminal::-webkit-scrollbar {
   display: none;
   width: 0;
   height: 0;
 }
 
-/* Boot line styles */
+/* Boot line animations */
 .boot-line {
   opacity: 0;
-  animation: typeIn 0.05s ease forwards;
+  animation: typeIn 0.03s ease forwards;
 }
 
 @keyframes typeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-/* Header - BIOS title */
-.boot-header {
-  color: var(--crt-text, #ffb000);
+/* ============================================
+   BIOS PHASE STYLES
+   ============================================ */
+
+.boot-bios-header {
+  color: #00aaaa;
   font-weight: bold;
-  font-size: 1.2rem;
-  text-shadow: 0 0 10px var(--crt-glow, rgba(255, 176, 0, 0.6));
+  font-size: 1.1rem;
 }
 
-/* Copyright */
-.boot-copyright {
-  color: var(--crt-text-dim, #888888);
-  font-size: 1rem;
+.boot-bios-sub {
+  color: #888888;
+  font-size: 0.95rem;
 }
 
-/* Info lines */
-.boot-info {
-  color: var(--crt-text, #cccccc);
+.boot-bios-info {
+  color: #aaaaaa;
 }
 
-/* Labels */
-.boot-label {
-  color: var(--crt-text, #ffffff);
+.boot-bios-hint {
+  color: #888888;
 }
 
-/* Memory counter */
-.boot-memory {
-  color: var(--crt-text, #ffb000);
+.boot-bios-detect {
+  color: #ffffff;
+}
+
+.boot-bios-label {
+  color: #ffffff;
+}
+
+.boot-bios-device {
+  color: #00aa00;
+}
+
+.boot-bios-init {
+  color: #aaaaaa;
+}
+
+.boot-bios-boot {
+  color: #ffff00;
+}
+
+.boot-bios-memory-ok {
+  color: #00ff00;
   font-weight: bold;
+}
+
+.bios-memory-count {
+  color: #00ff00;
   display: inline;
 }
 
-.memory-spinner {
-  display: inline-block;
-  animation: spin-chars 0.2s linear infinite;
-}
+/* ============================================
+   GRUB BOOTLOADER STYLES
+   ============================================ */
 
-@keyframes spin-chars {
-  0% { content: '|'; }
-  25% { content: '/'; }
-  50% { content: '-'; }
-  75% { content: '\\'; }
-}
-
-.boot-memory-ok {
-  color: #00ff00;
-  font-weight: bold;
-  text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
-}
-
-/* Process messages with loading animation */
-.boot-process {
-  color: var(--crt-text, #ffff00);
-}
-
-.loading-dots {
-  display: inline-block;
-  min-width: 24px;
-  text-align: left;
-}
-
-/* Success messages */
-.boot-success {
-  color: #00ff00;
-  text-shadow: 0 0 5px rgba(0, 255, 0, 0.4);
-}
-
-/* Border ASCII art */
-.boot-border {
-  color: var(--crt-text, #ffb000);
-  text-shadow: 0 0 8px var(--crt-glow, rgba(255, 176, 0, 0.5));
-}
-
-/* OK status lines (systemd style) */
-.boot-ok {
-  color: var(--crt-text, #cccccc);
+.grub-container {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  height: 100%;
+  padding: 10px;
 }
 
-.ok-bracket {
-  color: #888;
+.grub-header {
+  text-align: center;
+  margin-bottom: 20px;
 }
 
-.ok-text {
+.grub-logo {
+  color: #aaaaaa;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.grub-menu {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 20px;
+  background: #000;
+  border: 1px solid #444;
+  margin: 0 20px;
+}
+
+.grub-entry {
+  color: #aaaaaa;
+  padding: 4px 10px;
+  font-size: 1rem;
+}
+
+.grub-entry.selected {
+  background: #ffffff;
+  color: #000000;
+  font-weight: bold;
+}
+
+.grub-footer {
+  margin-top: 20px;
+  padding: 10px 20px;
+}
+
+.grub-help {
+  color: #888888;
+  font-size: 0.9rem;
+  margin-bottom: 5px;
+}
+
+.grub-countdown {
+  color: #ffff00;
+  font-size: 0.95rem;
+  margin-top: 10px;
+}
+
+/* ============================================
+   KERNEL BOOT STYLES (dmesg)
+   ============================================ */
+
+.boot-kernel {
+  color: #aaaaaa;
+  font-size: 0.9rem;
+}
+
+.boot-kernel-mem {
+  color: #00aaaa;
+  font-size: 0.9rem;
+}
+
+.boot-kernel-cpu {
+  color: #00aa00;
+  font-size: 0.9rem;
+}
+
+.boot-kernel-disk {
+  color: #aaaa00;
+  font-size: 0.9rem;
+}
+
+.boot-kernel-fs {
+  color: #00ff00;
+  font-size: 0.9rem;
+}
+
+/* ============================================
+   SYSTEMD STYLES
+   ============================================ */
+
+.systemd-starting {
+  color: #aaaaaa;
+}
+
+.systemd-ok {
+  color: #aaaaaa;
+}
+
+.systemd-status {
+  display: inline-block;
+  width: 80px;
+  text-align: center;
+  margin-right: 5px;
+}
+
+.systemd-status.starting {
+  color: #888888;
+}
+
+.systemd-status.ok {
   color: #00ff00;
   font-weight: bold;
-  text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
 }
 
-.ok-spinner {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-}
-
-.spinner-icon {
-  color: #00ff00;
-  animation: checkmark-pop 0.3s ease forwards;
-}
-
-@keyframes checkmark-pop {
-  0% {
-    transform: scale(0);
-    opacity: 0;
-  }
-  50% {
-    transform: scale(1.3);
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-.ok-message {
-  color: var(--crt-text, #cccccc);
-}
-
-.boot-ok::before {
-  content: '';
-}
-
-/* Final message */
-.boot-final {
-  color: var(--crt-text, #00ff00);
+.boot-systemd-host {
+  color: #ffffff;
   font-weight: bold;
-  text-shadow: 
-    0 0 10px rgba(0, 255, 0, 0.8),
-    0 0 20px rgba(0, 255, 0, 0.4);
+  font-size: 1.05rem;
+}
+
+.boot-systemd-login {
+  color: #00aaaa;
+}
+
+.boot-systemd-info {
+  color: #888888;
+}
+
+.boot-systemd-welcome {
+  color: #ffaa00;
+  font-weight: bold;
+}
+
+.boot-systemd-motd {
+  color: #00aa00;
+}
+
+.boot-systemd-final {
+  color: #00ff00;
+  font-weight: bold;
+  text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
   animation: pulse 0.5s ease-in-out 2;
 }
 
@@ -217,15 +280,14 @@
 
 /* Blank lines */
 .boot-blank {
-  height: 1.4em;
+  height: 1.35em;
 }
 
 /* Blinking cursor */
 .boot-cursor {
-  color: var(--crt-text, #ffb000);
+  color: #aaaaaa;
   opacity: 0;
   transition: opacity 0.1s;
-  text-shadow: 0 0 8px var(--crt-glow, rgba(255, 176, 0, 0.8));
 }
 
 .boot-cursor.visible {
@@ -252,58 +314,185 @@
   100% { opacity: 0.97; }
 }
 
-/* Responsive */
+/* ============================================
+   RESPONSIVE STYLES
+   ============================================ */
+
 @media (max-width: 768px) {
   .boot-terminal {
-    font-size: 0.85rem;
+    font-size: 0.75rem;
   }
   
-  .boot-header {
-    font-size: 1rem;
+  .boot-bios-header {
+    font-size: 0.9rem;
   }
   
   .boot-screen {
     padding: 15px;
   }
+
+  .grub-menu {
+    margin: 0 10px;
+    padding: 5px 10px;
+  }
+
+  .grub-entry {
+    font-size: 0.85rem;
+    padding: 3px 8px;
+  }
+
+  .grub-help, .grub-countdown {
+    font-size: 0.75rem;
+  }
+
+  .boot-kernel,
+  .boot-kernel-mem,
+  .boot-kernel-cpu,
+  .boot-kernel-disk {
+    font-size: 0.7rem;
+  }
+
+  .systemd-status {
+    width: 65px;
+    font-size: 0.75rem;
+  }
 }
 
 @media (max-width: 480px) {
   .boot-terminal {
-    font-size: 0.7rem;
+    font-size: 0.6rem;
+    line-height: 1.25;
   }
-  
+
+  .boot-bios-header {
+    font-size: 0.75rem;
+  }
+
   .boot-screen {
     padding: 10px;
   }
+
+  .grub-container {
+    padding: 5px;
+  }
+
+  .grub-menu {
+    margin: 0;
+    padding: 5px;
+  }
+
+  .grub-entry {
+    font-size: 0.65rem;
+    padding: 2px 5px;
+  }
+
+  .grub-help {
+    font-size: 0.55rem;
+  }
+
+  .grub-countdown {
+    font-size: 0.6rem;
+  }
+
+  .boot-kernel,
+  .boot-kernel-mem,
+  .boot-kernel-cpu,
+  .boot-kernel-disk,
+  .boot-kernel-fs {
+    font-size: 0.55rem;
+  }
+
+  .systemd-status {
+    width: 55px;
+    font-size: 0.6rem;
+  }
+
+  .systemd-starting,
+  .systemd-ok {
+    font-size: 0.6rem;
+  }
 }
 
-/* Theme support - Green theme */
-[data-theme="green"] .boot-header,
-[data-theme="green"] .boot-border {
-  color: #33ff33;
-  text-shadow: 0 0 10px rgba(51, 255, 51, 0.6);
+@media (max-width: 360px) {
+  .boot-terminal {
+    font-size: 0.5rem;
+  }
+
+  .boot-screen {
+    padding: 8px;
+  }
+
+  .grub-logo {
+    font-size: 0.6rem;
+  }
 }
 
-[data-theme="green"] .boot-memory {
-  color: #33ff33;
+/* Landscape mode on mobile */
+@media (max-height: 500px) and (orientation: landscape) {
+  .boot-terminal {
+    font-size: 0.55rem;
+    line-height: 1.2;
+  }
+
+  .boot-screen {
+    padding: 8px;
+  }
+
+  .boot-blank {
+    height: 0.8em;
+  }
+
+  .grub-menu {
+    gap: 0;
+  }
+
+  .grub-entry {
+    padding: 1px 5px;
+  }
+}
+
+/* ============================================
+   THEME SUPPORT
+   ============================================ */
+
+/* Green theme */
+[data-theme="green"] .boot-bios-header {
+  color: #00ff88;
 }
 
 [data-theme="green"] .boot-cursor {
   color: #33ff33;
-  text-shadow: 0 0 8px rgba(51, 255, 51, 0.8);
 }
 
-[data-theme="green"] .boot-process {
-  color: #ffff33;
+[data-theme="green"] .grub-entry.selected {
+  background: #33ff33;
+  color: #000000;
 }
 
-/* Amber theme (default) */
-[data-theme="amber"] .boot-ok {
-  color: #cccccc;
+[data-theme="green"] .boot-systemd-welcome {
+  color: #33ff33;
 }
 
-[data-theme="amber"] .boot-success,
-[data-theme="amber"] .boot-memory-ok,
-[data-theme="amber"] .boot-final {
-  color: #00ff00;
+[data-theme="green"] .boot-systemd-final {
+  color: #33ff33;
+  text-shadow: 0 0 10px rgba(51, 255, 51, 0.5);
+}
+
+/* Amber theme */
+[data-theme="amber"] .boot-bios-header {
+  color: #ffaa00;
+}
+
+[data-theme="amber"] .boot-cursor {
+  color: #ffb000;
+  text-shadow: 0 0 8px rgba(255, 176, 0, 0.8);
+}
+
+[data-theme="amber"] .grub-entry.selected {
+  background: #ffb000;
+  color: #000000;
+}
+
+[data-theme="amber"] .boot-systemd-welcome {
+  color: #ffb000;
 }

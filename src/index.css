@@ -32,6 +32,9 @@ html {
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Prevent iOS text size adjustment */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
@@ -41,6 +44,10 @@ body {
   background: #0a0a0a;
   color: var(--crt-text);
   line-height: 1.5;
+  /* Prevent overscroll bounce on iOS */
+  overscroll-behavior: none;
+  /* Prevent pull-to-refresh */
+  overscroll-behavior-y: contain;
 }
 
 /* Typography */
@@ -56,6 +63,23 @@ code, pre {
 a {
   color: inherit;
   text-decoration: none;
+}
+
+/* Input styling for mobile */
+input, textarea, button {
+  font-family: inherit;
+  font-size: inherit;
+  /* Prevent iOS zoom on input focus */
+  font-size: max(16px, 1em);
+}
+
+/* Remove iOS input shadow */
+input[type="text"],
+input[type="search"],
+textarea {
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 0;
 }
 
 /* Utility classes */
@@ -84,4 +108,25 @@ a {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+/* Mobile-specific utilities */
+@media (max-width: 480px) {
+  html {
+    /* Slightly smaller base font on mobile */
+    font-size: 14px;
+  }
+}
+
+/* Prevent text selection during interactions on mobile */
+@media (hover: none) and (pointer: coarse) {
+  .no-select {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* Improve tap highlighting */
+  button, a, .terminal-menu-item {
+    -webkit-tap-highlight-color: rgba(255, 176, 0, 0.2);
+  }
 }

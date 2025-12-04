@@ -10,6 +10,18 @@
   z-index: 150;
   display: flex;
   flex-direction: column;
+  animation: editorSlideIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes editorSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .nvim-editor {
@@ -242,19 +254,131 @@
   color: #f8f8f2;
 }
 
-/* Responsive */
+/* Responsive - Tablets */
+@media (max-width: 768px) {
+  .nvim-editor {
+    font-size: 0.9rem;
+  }
+
+  .nvim-line-number {
+    width: 35px;
+    padding-right: 8px;
+  }
+
+  .nvim-statusline {
+    font-size: 0.85rem;
+    padding: 4px 6px;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .nvim-mode-indicator {
+    font-size: 0.75rem;
+  }
+
+  .nvim-position,
+  .nvim-percentage {
+    font-size: 0.8rem;
+  }
+
+  .nvim-commandline {
+    padding: 4px 6px;
+  }
+}
+
+/* Responsive - Mobile phones */
 @media (max-width: 480px) {
   .nvim-editor {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
+  }
+
+  .nvim-tabbar {
+    min-height: 28px;
+  }
+
+  .nvim-tab {
+    padding: 4px 8px;
+    font-size: 0.75rem;
   }
   
   .nvim-line-number {
-    width: 30px;
-    padding-right: 8px;
+    width: 28px;
+    padding-right: 6px;
+    font-size: 0.75rem;
   }
-  
-  .nvim-statusline {
+
+  .nvim-line-content {
     font-size: 0.8rem;
-    flex-wrap: wrap;
+  }
+
+  .nvim-statusline {
+    font-size: 0.75rem;
+    padding: 3px 5px;
+    min-height: 28px;
+  }
+
+  .nvim-mode-indicator {
+    font-size: 0.65rem;
+    padding: 1px 4px;
+  }
+
+  .nvim-filename {
+    font-size: 0.7rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 120px;
+  }
+
+  .nvim-filetype {
+    display: none;
+  }
+
+  .nvim-position {
+    padding: 0 4px;
+    font-size: 0.7rem;
+  }
+
+  .nvim-percentage {
+    min-width: 30px;
+    font-size: 0.7rem;
+  }
+
+  .nvim-commandline {
+    padding: 3px 5px;
+    font-size: 0.75rem;
+    min-height: 22px;
+  }
+
+  .nvim-help-hint {
+    font-size: 0.7rem;
+  }
+}
+
+/* Very small screens */
+@media (max-width: 360px) {
+  .nvim-line-number {
+    width: 24px;
+    padding-right: 4px;
+  }
+
+  .nvim-statusline {
+    font-size: 0.65rem;
+  }
+
+  .nvim-position,
+  .nvim-percentage {
+    display: none;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .nvim-content {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .nvim-line {
+    min-height: 1.6em;
   }
 }

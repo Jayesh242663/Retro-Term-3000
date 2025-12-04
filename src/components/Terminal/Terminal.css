@@ -11,7 +11,19 @@
   overflow: hidden;
 }
 
-/* Menu Bar */
+/* Mobile terminal specific styles */
+.terminal.terminal-mobile {
+  /* Prevent zoom on double-tap */
+  touch-action: manipulation;
+}
+
+.terminal.terminal-mobile .terminal-content {
+  /* Better scroll behavior on mobile */
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* Menu Bar - Always at top, never moves */
 .terminal-menubar {
   display: flex;
   gap: 5px;
@@ -19,6 +31,8 @@
   background: rgba(0, 0, 0, 0.5);
   border-bottom: 1px solid var(--crt-text-dim, #cc8800);
   flex-shrink: 0;
+  z-index: 1001;
+  position: relative;
 }
 
 .terminal-menu-item {
@@ -26,10 +40,17 @@
   transition: all 0.2s ease;
   text-shadow: 0 0 5px var(--crt-glow, rgba(255, 176, 0, 0.6));
   outline: none;
+  cursor: pointer;
 }
 
 .terminal-menu-item:hover,
 .terminal-menu-item.focused {
+  background: var(--crt-text, #ffb000);
+  color: var(--crt-bg, #0d0800);
+  text-shadow: none;
+}
+
+.terminal-menu-item.active {
   background: var(--crt-text, #ffb000);
   color: var(--crt-bg, #0d0800);
   text-shadow: none;
@@ -42,6 +63,32 @@
 @keyframes menu-blink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.7; }
+}
+
+/* Main content area - contains terminal or panels */
+.terminal-main-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* Smooth panel transitions */
+.terminal-main-area > *[class*="overlay"] {
+  animation: panelSlideIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes panelSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Terminal Content */
@@ -90,6 +137,8 @@
   margin-bottom: 15px;
   white-space: pre;
   overflow-x: auto;
+  max-width: 100%;
+  display: block;
 }
 
 .terminal-subtitle {
@@ -139,13 +188,44 @@
   padding-left: 0;
   white-space: pre-wrap;
   word-break: break-word;
-}
-
-/* Make outputs compact so they fit on screen and don't use table layouts */
-.terminal-output {
+  overflow-wrap: break-word;
+  max-width: 100%;
   font-size: 1rem;
   line-height: 1.3;
-  max-width: 100%;
+}
+
+/* Clickable links in terminal output */
+.terminal-link {
+  color: var(--crt-text, #ffb000);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-shadow: 0 0 5px var(--crt-glow, rgba(255, 176, 0, 0.6));
+}
+
+.terminal-link:hover {
+  color: var(--crt-bg, #0d0800);
+  background: var(--crt-text, #ffb000);
+  text-decoration: none;
+  text-shadow: none;
+  padding: 0 2px;
+  margin: 0 -2px;
+}
+
+.terminal-link:active {
+  opacity: 0.8;
+}
+
+/* Green theme link styles */
+[data-theme="green"] .terminal-link {
+  color: var(--crt-text, #33ff33);
+  text-shadow: 0 0 5px var(--crt-glow, rgba(51, 255, 51, 0.6));
+}
+
+[data-theme="green"] .terminal-link:hover {
+  color: var(--crt-bg, #001100);
+  background: var(--crt-text, #33ff33);
 }
 
 /* Input Form */
@@ -324,6 +404,39 @@
   margin: 6px 0;
   color: var(--crt-text, #ffb000);
   opacity: 0.98;
+}
+
+/* Line-by-line typing animation effect */
+.typing-output-line {
+  animation: line-appear 0.05s ease-out;
+}
+
+@keyframes line-appear {
+  from {
+    opacity: 0;
+    transform: translateX(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Typing indicator when output is being typed */
+.terminal-typing-indicator {
+  display: inline-block;
+  width: 8px;
+  height: 14px;
+  background: var(--crt-text, #ffb000);
+  animation: typing-cursor-blink 0.4s step-end infinite;
+  vertical-align: text-bottom;
+  margin-left: 2px;
+  box-shadow: 0 0 5px var(--crt-glow, rgba(255, 176, 0, 0.6));
+}
+
+@keyframes typing-cursor-blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
 }
 
 .loading-spinner {
@@ -506,6 +619,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 @keyframes hack-line-in {
@@ -571,20 +685,29 @@
   font-family: 'VT323', monospace;
   font-size: 1rem;
   line-height: 1.4;
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 .ls-row {
   display: flex;
-  white-space: pre;
+  flex-wrap: wrap;
+  white-space: pre-wrap;
 }
 
 .ls-file {
   color: var(--crt-text, #ffb000);
+  white-space: nowrap;
+  margin-right: 8px;
+  margin-bottom: 2px;
 }
 
 .ls-dir {
   color: #5dade2;
   font-weight: bold;
+  white-space: nowrap;
+  margin-right: 8px;
+  margin-bottom: 2px;
 }
 
 /* Pre-formatted ls -l output */
@@ -592,9 +715,12 @@
   font-family: 'VT323', monospace;
   font-size: 0.95rem;
   line-height: 1.3;
-  white-space: pre;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: break-word;
   color: var(--crt-text, #ffb000);
   margin: 0;
+  max-width: 100%;
 }
 
 /* Legacy styles for backwards compatibility */
@@ -663,10 +789,12 @@
   line-height: 1.3;
   white-space: pre-wrap;
   word-break: break-word;
+  overflow-wrap: break-word;
   margin: 6px 0;
   padding: 6px 4px;
   background: transparent;
   border-left: 1px solid rgba(255, 176, 0, 0.12);
+  max-width: 100%;
 }
 
 /* Grep Command Output */
@@ -676,21 +804,25 @@
 }
 
 .grep-line {
-  display: block;
+  display: flex;
+  flex-wrap: wrap;
   padding: 2px 0;
+  max-width: 100%;
 }
 
 .grep-linenum {
   color: var(--crt-text-dim, #cc8800);
-  display: inline-block;
+  flex-shrink: 0;
   width: 36px;
+  min-width: 36px;
 }
 
 .grep-content {
   color: var(--crt-text, #ffb000);
-  display: inline-block;
-  max-width: calc(100% - 56px);
+  flex: 1;
+  min-width: 0;
   word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 /* Neofetch styling */
@@ -699,42 +831,430 @@
   text-shadow: 0 0 5px var(--crt-glow, rgba(255, 176, 0, 0.4));
 }
 
-/* Responsive */
+/* Globe Animation - Retro rotating earth */
+.terminal-globe {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 0;
+}
+
+.globe-animation {
+  font-family: 'VT323', monospace;
+  font-size: 1.1rem;
+  line-height: 1.1;
+  color: var(--crt-text, #ffb000);
+  text-shadow: 
+    0 0 8px var(--crt-glow, rgba(255, 176, 0, 0.8)),
+    0 0 15px var(--crt-glow, rgba(255, 176, 0, 0.5));
+  white-space: pre;
+  text-align: center;
+  animation: globe-glow 2s ease-in-out infinite;
+}
+
+@keyframes globe-glow {
+  0%, 100% {
+    text-shadow: 
+      0 0 8px var(--crt-glow, rgba(255, 176, 0, 0.8)),
+      0 0 15px var(--crt-glow, rgba(255, 176, 0, 0.5));
+    filter: brightness(1);
+  }
+  50% {
+    text-shadow: 
+      0 0 12px var(--crt-glow, rgba(255, 176, 0, 1)),
+      0 0 25px var(--crt-glow, rgba(255, 176, 0, 0.7)),
+      0 0 40px var(--crt-glow, rgba(255, 176, 0, 0.4));
+    filter: brightness(1.1);
+  }
+}
+
+/* Globe animation mobile adjustments */
+@media (max-width: 480px) {
+  .globe-animation {
+    font-size: 0.75rem;
+    line-height: 1.05;
+  }
+}
+
+@media (max-width: 360px) {
+  .globe-animation {
+    font-size: 0.6rem;
+  }
+}
+
+/* Responsive - Tablets */
 @media (max-width: 768px) {
   .terminal {
-    min-height: 450px;
+    min-height: 300px;
     font-size: 1rem;
   }
 
   .terminal-ascii {
-    font-size: 0.35rem;
+    font-size: 0.32rem;
+    line-height: 1.15;
   }
 
   .terminal-menubar {
     flex-wrap: wrap;
-    padding: 6px 10px;
+    padding: 6px 8px;
+    gap: 3px;
   }
 
   .terminal-menu-item {
-    padding: 3px 8px;
+    padding: 6px 10px;
     font-size: 0.9rem;
+    /* Minimum touch target size */
+    min-height: 36px;
+    display: flex;
+    align-items: center;
   }
 
   .terminal-content {
-    padding: 10px 15px;
+    padding: 8px 10px;
   }
 
   .terminal-input {
     font-size: 1rem;
   }
+
+  .terminal-input-display {
+    font-size: 1rem;
+  }
+
+  .terminal-prompt {
+    font-size: 0.95rem;
+  }
+
+  .terminal-statusbar {
+    padding: 5px 10px;
+    font-size: 0.8rem;
+    min-height: 32px;
+  }
+
+  .terminal-welcome {
+    margin-bottom: 15px;
+  }
+
+  .terminal-subtitle {
+    font-size: 0.85rem;
+  }
+
+  .terminal-hint {
+    font-size: 0.95rem;
+  }
+
+  .ls-pre-output,
+  .cat-output,
+  .typing-output {
+    font-size: 0.9rem;
+  }
 }
 
+/* Responsive - Mobile phones */
 @media (max-width: 480px) {
+  .terminal {
+    font-size: 0.9rem;
+  }
+
   .terminal-ascii {
-    font-size: 0.28rem;
+    font-size: 0.25rem;
+    line-height: 1.1;
+    margin-bottom: 10px;
+  }
+
+  .terminal-menubar {
+    padding: 4px 6px;
+    gap: 2px;
+  }
+
+  .terminal-menu-item {
+    padding: 5px 7px;
+    font-size: 0.8rem;
+    min-height: 32px;
+  }
+
+  .terminal-content {
+    padding: 6px 8px;
   }
   
   .terminal-prompt {
+    font-size: 0.85rem;
+    /* Allow prompt to wrap on very small screens */
+    word-break: break-all;
+  }
+
+  .terminal-input,
+  .terminal-input-display {
+    font-size: 0.95rem;
+  }
+
+  .terminal-input-wrapper {
+    /* Ensure input area has good touch target */
+    min-height: 30px;
+  }
+
+  .terminal-block-cursor {
+    width: 0.5em;
+    height: 1em;
+  }
+
+  .terminal-statusbar {
+    padding: 4px 8px;
+    font-size: 0.7rem;
+    flex-wrap: wrap;
+    gap: 4px;
+    min-height: 28px;
+  }
+
+  .terminal-statusbar span {
+    white-space: nowrap;
+  }
+
+  .terminal-welcome {
+    margin-bottom: 12px;
+  }
+
+  .terminal-subtitle {
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+  }
+
+  .terminal-hint {
+    font-size: 0.85rem;
+  }
+
+  .terminal-line {
+    margin-bottom: 6px;
+    line-height: 1.3;
+  }
+
+  .terminal-input-line {
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+
+  .ls-pre-output,
+  .cat-output,
+  .typing-output,
+  .terminal-output {
+    font-size: 0.85rem;
+    line-height: 1.25;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .ls-columns .ls-row {
+    flex-wrap: wrap;
+  }
+
+  .grep-output {
+    font-size: 0.85rem;
+  }
+
+  .loading-progress-container {
+    width: 100%;
+    max-width: 280px;
+  }
+
+  .progress-track {
+    width: 180px;
+  }
+
+  .neofetch {
+    font-size: 0.75rem;
+  }
+}
+
+/* Very small screens */
+@media (max-width: 360px) {
+  .terminal-ascii {
+    font-size: 0.2rem;
+  }
+
+  .terminal-prompt {
+    font-size: 0.8rem;
+  }
+
+  .terminal-menubar {
+    display: none; /* Hide menu on very small screens - use commands instead */
+  }
+
+  .terminal-content {
+    padding: 5px 6px;
+  }
+
+  .terminal-statusbar {
+    font-size: 0.65rem;
+    padding: 3px 6px;
+  }
+
+  /* Hide some status bar items */
+  .terminal-statusbar span:nth-child(2) {
+    display: none;
+  }
+}
+
+/* Landscape mode on mobile */
+@media (max-height: 500px) and (orientation: landscape) {
+  .terminal-ascii {
+    font-size: 0.22rem;
+    margin-bottom: 8px;
+  }
+
+  .terminal-menubar {
+    padding: 3px 6px;
+  }
+
+  .terminal-menu-item {
+    padding: 3px 6px;
+    min-height: 28px;
+  }
+
+  .terminal-content {
+    padding: 4px 8px;
+  }
+
+  .terminal-statusbar {
+    padding: 3px 8px;
+    min-height: 24px;
+  }
+
+  .terminal-welcome {
+    margin-bottom: 8px;
+  }
+
+  .terminal-subtitle,
+  .terminal-hint {
+    font-size: 0.8rem;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .terminal-menu-item {
+    /* Larger touch targets */
+    padding: 8px 12px;
+    min-height: 40px;
+  }
+
+  .terminal-input-form {
+    /* Better touch area for input */
+    padding: 8px 0;
+    margin-top: 8px;
+  }
+
+  .terminal-input-wrapper {
+    min-height: 36px;
+  }
+
+  /* Remove hover effects on touch devices */
+  .terminal-menu-item:hover {
+    background: transparent;
+  }
+
+  .terminal-menu-item:active {
+    background: var(--crt-text, #ffb000);
+    color: var(--crt-bg, #0d0800);
+  }
+
+  /* Ensure scrolling is smooth */
+  .terminal-content {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+
+  /* Disable text selection during scroll */
+  .terminal-content:active {
+    user-select: none;
+  }
+}
+
+/* Safe area support for notched phones */
+@supports (padding: max(0px)) {
+  .terminal-content {
+    padding-left: max(8px, env(safe-area-inset-left));
+    padding-right: max(8px, env(safe-area-inset-right));
+  }
+
+  .terminal-statusbar {
+    padding-bottom: max(4px, env(safe-area-inset-bottom));
+  }
+}
+
+/* Global output alignment - ensure all outputs wrap and stay visible */
+.terminal-output,
+.typing-output,
+.cat-output,
+.ls-pre-output,
+.grep-output,
+.neofetch {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+/* Pre elements inside outputs should also wrap */
+pre.cat-output,
+pre.ls-pre-output,
+pre.typing-output {
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Ensure long file paths and URLs break */
+.terminal-output a,
+.terminal-output code,
+.cat-output a {
+  word-break: break-all;
+}
+
+/* Mobile-specific output improvements */
+@media (max-width: 480px) {
+  /* Ensure all pre-formatted content wraps */
+  pre {
+    white-space: pre-wrap !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+  }
+
+  /* Long filenames in ls should wrap */
+  .ls-file,
+  .ls-dir {
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  /* Progress container should fit screen */
+  .loading-progress-container {
+    max-width: calc(100% - 16px);
+  }
+
+  .progress-track {
+    flex: 1;
+    min-width: 100px;
+    max-width: 200px;
+  }
+
+  /* Neofetch should scale down */
+  .neofetch pre {
+    font-size: 0.65rem;
+    line-height: 1.2;
+  }
+}
+
+@media (max-width: 360px) {
+  .neofetch pre {
+    font-size: 0.55rem;
+  }
+
+  .progress-track {
+    max-width: 150px;
+  }
+
+  .progress-percent {
+    min-width: 35px;
     font-size: 0.9rem;
   }
 }

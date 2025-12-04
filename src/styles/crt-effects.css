@@ -75,6 +75,11 @@
   animation: led-pulse 2s ease-in-out infinite;
 }
 
+/* Hide Power LED in screen-only mode */
+.crt-monitor.screen-only-mode::after {
+  display: none;
+}
+
 @keyframes led-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.6; }

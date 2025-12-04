@@ -1,0 +1,90 @@
+/* Retro Dialog Box Styles */
+
+.retro-dialog {
+  background: var(--crt-bg, #0d0800);
+  border: 2px solid var(--crt-text, #ffb000);
+  border-radius: 4px;
+  box-shadow: 
+    0 0 10px var(--crt-glow, rgba(255, 176, 0, 0.3)),
+    inset 0 0 20px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  font-family: 'VT323', monospace;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.retro-dialog-titlebar {
+  background: var(--crt-bg, #0d0800);
+  border-bottom: 1px solid var(--crt-text-dim, #cc8800);
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.retro-dialog-bracket {
+  color: var(--crt-text-dim, #cc8800);
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+.retro-dialog-title {
+  font-size: 0.95rem;
+  font-weight: bold;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--crt-text, #ffb000);
+  text-shadow: 0 0 8px var(--crt-glow, rgba(255, 176, 0, 0.5));
+}
+
+.retro-dialog-content {
+  padding: 12px;
+  color: var(--crt-text, #ffb000);
+  font-size: 1rem;
+  line-height: 1.5;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  text-shadow: 0 0 5px var(--crt-glow, rgba(255, 176, 0, 0.3));
+}
+
+/* Scrollbar styling for dialog */
+.retro-dialog-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.retro-dialog-content::-webkit-scrollbar-track {
+  background: var(--crt-bg, #0d0800);
+  border-left: 1px solid var(--crt-text-dim, #cc8800);
+}
+
+.retro-dialog-content::-webkit-scrollbar-thumb {
+  background: var(--crt-text-dim, #cc8800);
+  border-radius: 2px;
+}
+
+.retro-dialog-content::-webkit-scrollbar-thumb:hover {
+  background: var(--crt-text, #ffb000);
+}
+
+/* Responsive */
+@media (max-width: 1400px) {
+  .retro-dialog-title {
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+  }
+  
+  .retro-dialog-content {
+    font-size: 0.9rem;
+    padding: 10px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .retro-dialog {
+    display: none;
+  }
+}
