@@ -55,17 +55,17 @@ function App() {
     if (isFullscreen) setIsFullscreen(false);
   };
 
-  // Exit fullscreen/screen-only with Escape key
+  // Exit fullscreen with Escape key (screen-only mode requires button click to exit)
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
-        if (isScreenOnly) setIsScreenOnly(false);
-        else if (isFullscreen) setIsFullscreen(false);
+        if (isFullscreen) setIsFullscreen(false);
+        // Note: ESC does not exit screen-only mode - use the toggle button instead
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isFullscreen, isScreenOnly]);
+  }, [isFullscreen]);
 
   // Handle power button press - start boot sequence
   const handlePowerOn = () => {
@@ -295,7 +295,7 @@ Repository:
         <button 
           className={`view-toggle-btn ${isScreenOnly ? 'active' : ''}`}
           onClick={toggleScreenOnly}
-          title={isScreenOnly ? 'Exit Screen Mode (Esc)' : 'Screen Only Mode'}
+          title={isScreenOnly ? 'Exit Screen Mode' : 'Screen Only Mode'}
         >
           {isScreenOnly ? '⊟' : '▣'}
         </button>
