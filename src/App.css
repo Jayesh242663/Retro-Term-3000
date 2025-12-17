@@ -26,6 +26,8 @@ body {
   user-select: none;
   /* Prevent iOS text size adjustment */
   -webkit-text-size-adjust: 100%;
+  /* Prevent double-tap zoom on mobile */
+  touch-action: manipulation;
 }
 
 #root {
@@ -34,6 +36,8 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
+  /* Prevent double-tap zoom on mobile */
+  touch-action: manipulation;
 }
 
 .app {
@@ -46,6 +50,8 @@ body {
   align-items: center;
   padding: 0 320px; /* Make room for side panels */
   overflow: hidden;
+  /* Prevent double-tap zoom on mobile */
+  touch-action: manipulation;
   /* Prevent elastic scrolling on iOS */
   touch-action: manipulation;
 }
