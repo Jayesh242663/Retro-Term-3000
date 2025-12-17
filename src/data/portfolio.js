@@ -15,7 +15,6 @@ export const portfolioData = {
     backend: ["Node.js", "Express.js"],
     databases: ["MySQL", "MongoDB", "PostgreSQL"],
     tools: ["Git", "GitHub", "Wireshark", "Burp Suite"],
-    soft: ["Teamwork", "Communication", "Problem-Solving", "Time Management"],
   },
 
   projects: [
@@ -23,7 +22,7 @@ export const portfolioData = {
       name: "Bank Management System",
       description: "Simulates core banking operations with account management and transactions; originally Java, rebuilt in Python with MySQL integration.",
       tech: ["Python", "MySQL"],
-      link: "https://github.com/Jayesh242663/bank-management-system",
+      link: "https://github.com/Jayesh242663/BankingSystemApplication-python-",
     },
     {
       name: "Workspace Management System",
@@ -39,12 +38,37 @@ export const portfolioData = {
     },
   ],
 
-  experience: [
+  education: [
     {
-      role: "Software Engineer",
-      company: "Independent / Personal Projects",
-      period: "2021 - Present",
-      description: "Designing and building full-stack applications, focused on web and desktop tooling.",
+      degree: "Bachelor of Engineering in Computer Science",
+      institution: "Your University Name",
+      period: "2020 - 2024",
+      details: "Focused on software engineering, data structures, algorithms, and system design.",
+    },
+  ],
+
+  certifications: [
+    {
+      name: "Python for Everybody Specialization",
+      issuer: "Coursera - University of Michigan",
+      date: "2023",
+      link: "https://www.coursera.org/account/accomplishments/specialization/certificate/YOURCODE",
+    },
+    {
+      name: "Web Development Bootcamp",
+      issuer: "Udemy",
+      date: "2023",
+      link: "https://www.udemy.com/certificate/YOURCODE",
+    },
+    {
+      name: "Git & GitHub Essentials",
+      issuer: "LinkedIn Learning",
+      date: "2022",
+    },
+    {
+      name: "Database Management Systems",
+      issuer: "NPTEL",
+      date: "2022",
     },
   ],
 };

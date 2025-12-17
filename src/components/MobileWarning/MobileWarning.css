@@ -1,24 +1,7 @@
 /* Mobile Warning - Simple Retro Style */
 
 .mobile-warning {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: #000;
-  z-index: 9999;
-  justify-content: center;
-  align-items: center;
-  padding: 20px;
-  font-family: 'VT323', monospace;
-}
-
-@media (max-width: 1200px) {
-  .mobile-warning {
-    display: flex;
-  }
+  display: none; /* Hide blocking overlay; mobile experience is now supported */
 }
 
 .mobile-warning-box {

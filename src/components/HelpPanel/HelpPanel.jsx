@@ -22,6 +22,7 @@ const HelpPanel = ({ isOpen, onClose }) => {
       icon: '📁',
       commands: [
         { cmd: 'help', desc: 'Open this help panel' },
+        { cmd: 'profile / dossier', desc: 'Open surveillance-style profile' },
         { cmd: 'about', desc: 'Display information about me' },
         { cmd: 'resume', desc: 'View my resume/CV' },
         { cmd: 'skills', desc: 'List my technical skills' },
@@ -276,7 +277,7 @@ const HelpPanel = ({ isOpen, onClose }) => {
 
   const renderCommands = () => (
     <div className="help-section">
-      <h2 className="section-title">╔══ COMMAND REFERENCE ══╗</h2>
+      <h2 className="section-title">COMMAND REFERENCE</h2>
       <p className="section-desc">All available commands organized by category</p>
       
       {Object.entries(commandCategories).map(([key, category]) => (
@@ -363,7 +364,7 @@ const HelpPanel = ({ isOpen, onClose }) => {
 
   const renderThemes = () => (
     <div className="help-section">
-      <h2 className="section-title">╔══ COLOR THEMES ══╗</h2>
+      <h2 className="section-title">COLOR THEMES</h2>
       <p className="section-desc">Customize your terminal's appearance</p>
       
       <div className="themes-grid">
@@ -390,7 +391,7 @@ const HelpPanel = ({ isOpen, onClose }) => {
 
   const renderCredits = () => (
     <div className="help-section">
-      <h2 className="section-title">╔══ CREDITS & ACKNOWLEDGMENTS ══╗</h2>
+      <h2 className="section-title">CREDITS & ACKNOWLEDGMENTS </h2>
       
       <div className="credits-block">
         <h3>▸ Created By</h3>
@@ -424,10 +425,15 @@ const HelpPanel = ({ isOpen, onClose }) => {
           This project is open source and available on GitHub. 
           Contributions, bug reports, and feature requests are welcome!
         </p>
-        <div className="github-link">
+        <a 
+          className="github-link" 
+          href="https://github.com/Jayesh242663/Retro-Term-3000" 
+          target="_blank" 
+          rel="noopener noreferrer"
+        >
           <span className="link-icon">◈</span>
-          <span>https://github.com/Jayesh242663/Retro-Term-3000</span>
-        </div>
+          <span className="github-url">https://github.com/Jayesh242663/Retro-Term-3000</span>
+        </a>
       </div>
 
       <div className="credits-block license">
@@ -437,10 +443,9 @@ const HelpPanel = ({ isOpen, onClose }) => {
 
       <div className="ascii-footer">
         <pre>{`
-    ╔═══════════════════════════════════════════╗
-    ║  Thank you for using Retro-Term 3000!     ║
-    ║  May your code compile on the first try.  ║
-    ╚═══════════════════════════════════════════╝
+    
+      Thank you for using Retro-Term 3000!     
+      May your code compile on the first try.  
         `}</pre>
       </div>
     </div>

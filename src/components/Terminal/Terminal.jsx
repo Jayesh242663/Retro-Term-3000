@@ -3,9 +3,78 @@ import { playKeySound, playEnterSound, playErrorSound, playProgressBeep } from '
 import FileExplorer from '../FileExplorer';
 import NvimEditor from '../NvimEditor';
 import HelpPanel from '../HelpPanel';
+import InfoPanel from '../InfoPanel';
 import resumeMd from '../../content/resume.md?raw';
 import { getFileContent, saveFile, fileExists, normalizePath, getFileType, getFileName, listFiles, getFileStructure, createDirectory, directoryExists, deleteFile, deleteDirectory, moveFile, copyFile, getFileSize, countLines, countWords, searchInFile, getHead, getTail, appendToFile, getDirectory } from '../../utils/fileSystem';
 import './Terminal.css';
+
+// Parse ANSI escape codes and convert to React elements with styling
+const parseAnsiToReact = (text) => {
+  if (!text) return null;
+  
+  // Strip cursor positioning and screen control codes but keep color codes
+  let cleaned = text
+    .replace(/\x1b\[(\d+;)?\d*[HfABCDsuJKmhlp]/g, (match) => {
+      // Keep 'm' codes (colors), strip others (cursor/screen control)
+      if (match.endsWith('m')) return match;
+      return match.endsWith('J') || match.endsWith('K') ? '\n' : '';
+    })
+    .replace(/\x1b\[\?.*?[hl]/g, '') // Strip mode settings
+    .replace(/\x1b\[8;.*?t/g, ''); // Strip window ops
+  
+  const elements = [];
+  let currentStyle = { color: 'var(--crt-text, #ffb000)' };
+  let buffer = '';
+  let i = 0;
+  
+  const flushBuffer = () => {
+    if (buffer) {
+      elements.push(
+        <span key={elements.length} style={{...currentStyle}}>
+          {buffer}
+        </span>
+      );
+      buffer = '';
+    }
+  };
+  
+  while (i < cleaned.length) {
+    if (cleaned[i] === '\x1b' && cleaned[i + 1] === '[') {
+      flushBuffer();
+      i += 2;
+      let code = '';
+      while (i < cleaned.length && cleaned[i] !== 'm') {
+        code += cleaned[i];
+        i++;
+      }
+      i++; // skip 'm'
+      
+      const codes = code.split(';').map(c => parseInt(c) || 0);
+      codes.forEach(c => {
+        if (c === 0) {
+          currentStyle = { color: 'var(--crt-text, #ffb000)' };
+        } else if (c === 1) {
+          currentStyle.fontWeight = 'bold';
+        } else if (c >= 30 && c <= 37) {
+          const colors = ['#1a1a1a', '#ff6b6b', '#4ecdc4', '#ffe66d', '#a8dadc', '#ff8fab', '#00d4ff', '#f1f1f1'];
+          currentStyle.color = colors[c - 30];
+        } else if (c >= 90 && c <= 97) {
+          const brightColors = ['#666', '#ff5555', '#50fa7b', '#f1fa8c', '#6272a4', '#ff79c6', '#8be9fd', '#ffffff'];
+          currentStyle.color = brightColors[c - 90];
+        } else if (c >= 40 && c <= 47) {
+          const bgColors = ['#000', '#ff6b6b', '#4ecdc4', '#ffe66d', '#a8dadc', '#ff8fab', '#00d4ff', '#f1f1f1'];
+          currentStyle.backgroundColor = bgColors[c - 40];
+        }
+      });
+    } else {
+      buffer += cleaned[i];
+      i++;
+    }
+  }
+  
+  flushBuffer();
+  return elements.length > 0 ? elements : cleaned;
+};
 
 // Utility function to convert URLs in text to clickable links
 const linkifyText = (text) => {
@@ -74,7 +143,7 @@ const processContentWithLinks = (content) => {
 // Available commands for tab auto-completion
 const AVAILABLE_COMMANDS = [
   // Portfolio commands
-  'help', 'about', 'resume', 'skills', 'projects', 'contact', 'experience',
+  'help', 'about', 'profile', 'dossier', 'info', 'resume', 'skills', 'projects', 'contact', 'experience',
   // File system commands
   'ls', 'dir', 'cd', 'cat', 'pwd', 'mkdir', 'touch', 'rm', 'mv', 'cp', 'tree',
   // Editor commands
@@ -88,10 +157,12 @@ const AVAILABLE_COMMANDS = [
   'ping', 'ifconfig', 'ip', 'netstat', 'curl', 'wget', 'traceroute', 'nslookup',
   'dig', 'host', 'arp', 'route', 'ss', 'telnet', 'ftp', 'ssh',
   // Fun commands
-  'neofetch', 'screenfetch', 'cowsay', 'fortune', 'cal', 'hack',
+  'neofetch', 'screenfetch', 'cowsay', 'fortune', 'cal', 'hack', 'mapscii',
   // Session commands  
   'exit', 'logout', 'shutdown', 'poweroff', 'halt', 'sudo', 'theme',
 ];
+
+const MAPS_PROXY_URL = import.meta.env.VITE_MAPS_PROXY_URL || 'ws://localhost:8787';
 
 const Terminal = ({ onCommand, onShutdown, initialOutput = [], welcomeMessage = true }) => {
   const [history, setHistory] = useState(initialOutput);
@@ -110,6 +181,7 @@ const Terminal = ({ onCommand, onShutdown, initialOutput = [], welcomeMessage = 
   const [showFileExplorer, setShowFileExplorer] = useState(false);
   const [showNvimEditor, setShowNvimEditor] = useState(false);
   const [showHelpPanel, setShowHelpPanel] = useState(false);
+  const [showInfoPanel, setShowInfoPanel] = useState(false);
   const [editorFile, setEditorFile] = useState(null);
   const [editorContent, setEditorContent] = useState('');
   const [fileSystemVersion, setFileSystemVersion] = useState(0); // Force re-render on file changes
@@ -123,12 +195,15 @@ const Terminal = ({ onCommand, onShutdown, initialOutput = [], welcomeMessage = 
   const [tabCompletionIndex, setTabCompletionIndex] = useState(-1); // Track tab completion cycling
   const [tabCompletionMatches, setTabCompletionMatches] = useState([]); // Matching commands for tab
   const [lastTabInput, setLastTabInput] = useState(''); // Track input when tab was first pressed
+  const [mapsciiActive, setMapsciiActive] = useState(false); // Track live mapscii session
+  const [mapsciiBuffer, setMapsciiBuffer] = useState(''); // Accumulated mapscii screen buffer
   // note: interactive confirmations removed; deletions run immediately
   const inputRef = useRef(null);
   const terminalRef = useRef(null);
   const contentRef = useRef(null);
   const menuRefs = useRef([]);
   const measureRef = useRef(null);
+  const mapsciiSocketRef = useRef(null);
 
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
@@ -204,6 +279,14 @@ const Terminal = ({ onCommand, onShutdown, initialOutput = [], welcomeMessage = 
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  // Cleanup mapscii socket on unmount
+  useEffect(() => () => {
+    if (mapsciiSocketRef.current) {
+      mapsciiSocketRef.current.close();
+      mapsciiSocketRef.current = null;
+    }
+  }, []);
+
   // Update cursor pixel position when text or cursor position changes
   useEffect(() => {
     if (measureRef.current) {
@@ -245,6 +328,70 @@ const Terminal = ({ onCommand, onShutdown, initialOutput = [], welcomeMessage = 
     }
     // Relative path
     return normalizePath(currentDir + '/' + path);
+  };
+
+  const closeMapsciiSession = (message = '[mapscii] session closed') => {
+    if (mapsciiSocketRef.current) {
+      mapsciiSocketRef.current.onmessage = null;
+      mapsciiSocketRef.current.onclose = null;
+      mapsciiSocketRef.current.onerror = null;
+      mapsciiSocketRef.current.close();
+      mapsciiSocketRef.current = null;
+    }
+    if (mapsciiActive) {
+      setMapsciiActive(false);
+      setMapsciiBuffer('');
+    }
+    if (message) setHistory(prev => [...prev, { type: 'output', content: message }]);
+  };
+
+  const startMapsciiSession = () => {
+    try {
+      const ws = new WebSocket(MAPS_PROXY_URL);
+      mapsciiSocketRef.current = ws;
+      setMapsciiActive(true);
+      setMapsciiBuffer('');
+      setHistory(prev => [...prev, { type: 'output', content: '[mapscii] connecting to mapscii.me ...', id: 'mapscii-status' }]);
+
+      ws.onopen = () => {
+        // Send initial terminal size
+        ws.send('\x1b[8;40;120t');
+        setHistory(prev => [...prev, { type: 'output', content: '[mapscii] connected. Use arrows to navigate, +/- to zoom, q to quit.', id: 'mapscii-ready' }]);
+      };
+
+      ws.onmessage = (e) => {
+        setMapsciiBuffer(prev => {
+          const newBuffer = prev + e.data;
+          // Update history with live mapscii display
+          setHistory(hist => {
+            const filtered = hist.filter(item => !item.isMapsciiLive);
+            const parsed = parseAnsiToReact(newBuffer);
+            return [...filtered, { 
+              type: 'output', 
+              content: <pre className="mapscii-output" style={{ margin: 0, whiteSpace: 'pre', fontFamily: 'VT323, monospace', lineHeight: '1.2', overflow: 'auto' }}>{parsed}</pre>, 
+              isMapsciiLive: true 
+            }];
+          });
+          return newBuffer;
+        });
+      };
+
+      ws.onerror = () => {
+        setHistory(prev => prev.filter(item => !item.isMapsciiLive).concat([{ type: 'output', content: '[mapscii] connection error' }]));
+      };
+
+      ws.onclose = () => {
+        setMapsciiActive(false);
+        setMapsciiBuffer('');
+        mapsciiSocketRef.current = null;
+        setHistory(prev => prev.filter(item => !item.isMapsciiLive).concat([{ type: 'output', content: '[mapscii] connection closed. Type "mapscii" to reconnect.' }]));
+      };
+    } catch (err) {
+      setMapsciiActive(false);
+      setMapsciiBuffer('');
+      mapsciiSocketRef.current = null;
+      setHistory(prev => [...prev, { type: 'output', content: `[mapscii] failed to start: ${err.message}` }]);
+    }
   };
 
   // Commands that should show loading animation
@@ -350,6 +497,18 @@ const Terminal = ({ onCommand, onShutdown, initialOutput = [], welcomeMessage = 
     setCurrentInput('');
     setCursorPosition(0);
 
+    // Mapscii session: allow exit/quit to close
+    if (mapsciiActive && (baseCommand === 'exit' || baseCommand === 'quit')) {
+      closeMapsciiSession();
+      return;
+    }
+
+    // Mapscii session: forward commands to remote if open
+    if (mapsciiActive && mapsciiSocketRef.current && mapsciiSocketRef.current.readyState === WebSocket.OPEN && baseCommand !== 'mapscii') {
+      mapsciiSocketRef.current.send(`${commandRaw}\n`);
+      return;
+    }
+
     // Check for clear command
     if (command === 'clear' || command === 'cls') {
       clearTerminal();
@@ -359,6 +518,12 @@ const Terminal = ({ onCommand, onShutdown, initialOutput = [], welcomeMessage = 
     // help - open the help panel
     if (baseCommand === 'help') {
       setShowHelpPanel(true);
+      return;
+    }
+
+    // profile/dossier - open the info panel with surveillance-style layout
+    if (baseCommand === 'profile' || baseCommand === 'dossier' || baseCommand === 'info') {
+      setShowInfoPanel(true);
       return;
     }
 
@@ -374,6 +539,15 @@ const Terminal = ({ onCommand, onShutdown, initialOutput = [], welcomeMessage = 
       const mem = getFileContent('~/resume.md');
       const contentToShow = mem !== null ? mem : resumeMd;
       await typeOutputLineByLine(contentToShow);
+      return;
+    }
+
+    if (baseCommand === 'mapscii') {
+      if (mapsciiActive) {
+        closeMapsciiSession();
+        return;
+      }
+      startMapsciiSession();
       return;
     }
 
@@ -2120,6 +2294,15 @@ default         192.168.1.1     0.0.0.0         UG    100    0        0 eth0
           isOpen={showHelpPanel}
           onClose={() => {
             setShowHelpPanel(false);
+            inputRef.current?.focus();
+          }}
+        />
+
+        {/* Info Panel - surveillance-style dossier */}
+        <InfoPanel
+          isOpen={showInfoPanel}
+          onClose={() => {
+            setShowInfoPanel(false);
             inputRef.current?.focus();
           }}
         />

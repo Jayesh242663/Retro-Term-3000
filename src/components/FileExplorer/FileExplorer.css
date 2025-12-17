@@ -233,7 +233,7 @@
   .file-explorer {
     width: 100%;
     max-width: none;
-    max-height: calc(100% - 10px);
+    max-height: calc(100dvh - 16px);
     font-size: 0.9rem;
     border-radius: 8px;
   }

@@ -31,6 +31,7 @@ function App() {
   const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isScreenOnly, setIsScreenOnly] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   // Toggle panel handlers
   const toggleLeftPanel = () => {
@@ -66,6 +67,14 @@ function App() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isFullscreen]);
+
+  // Track mobile viewport to favor terminal-first layout on small screens
+  useEffect(() => {
+    const updateIsMobile = () => setIsMobile(window.matchMedia('(max-width: 1024px)').matches);
+    updateIsMobile();
+    window.addEventListener('resize', updateIsMobile);
+    return () => window.removeEventListener('resize', updateIsMobile);
+  }, []);
 
   // Handle power button press - start boot sequence
   const handlePowerOn = () => {
@@ -275,8 +284,8 @@ Repository:
       {/* Background grid effect */}
       <div className="background-grid" />
       
-      {/* Left side - About Panel */}
-      {!isFullscreen && !isScreenOnly && (
+      {/* Left side - About Panel (hidden on mobile for terminal-first experience) */}
+      {!isFullscreen && !isScreenOnly && !isMobile && (
         <AboutPanel 
           isCollapsed={leftPanelCollapsed} 
           onToggle={toggleLeftPanel} 
@@ -318,8 +327,8 @@ Repository:
         )}
       </CRTMonitor>
 
-      {/* Right side - Cheat Sheet */}
-      {!isFullscreen && !isScreenOnly && (
+      {/* Right side - Cheat Sheet (hidden on mobile for terminal-first experience) */}
+      {!isFullscreen && !isScreenOnly && !isMobile && (
         <CheatSheet 
           isCollapsed={rightPanelCollapsed} 
           onToggle={toggleRightPanel} 

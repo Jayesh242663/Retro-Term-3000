@@ -246,10 +246,16 @@ body {
 @media (max-width: 768px) {
   body {
     padding: 0;
+    overflow-y: auto;
   }
 
   .app {
-    padding: 0;
+    padding: 8px;
+    min-height: 100vh;
+    height: auto;
+    justify-content: flex-start;
+    align-items: stretch;
+    overflow-y: auto;
   }
 
   .attribution {
@@ -264,6 +270,10 @@ body {
 }
 
 @media (max-width: 480px) {
+  .app {
+    padding: 6px;
+  }
+
   .attribution {
     font-size: 0.65rem;
     bottom: 3px;

@@ -1,0 +1,61 @@
+/* Retro Python Icon */
+.python-icon {
+  display: inline-block;
+  vertical-align: middle;
+  filter: drop-shadow(0 0 3px var(--crt-glow, rgba(255, 176, 0, 0.4)));
+  transition: all 0.3s ease;
+}
+
+.python-icon:hover {
+  filter: drop-shadow(0 0 6px var(--crt-glow, rgba(255, 176, 0, 0.8)));
+  transform: scale(1.1);
+}
+
+/* Top half of Python logo */
+.python-top {
+  fill: var(--crt-text, #ffb000);
+  opacity: 0.9;
+}
+
+/* Bottom half of Python logo */
+.python-bottom {
+  fill: var(--crt-text-dim, #cc8800);
+  opacity: 0.8;
+}
+
+/* Eyes/dots */
+.python-eye {
+  fill: var(--crt-bg, #0d0800);
+  opacity: 1;
+}
+
+/* Retro scanline effect on hover */
+.python-icon:hover .python-top,
+.python-icon:hover .python-bottom {
+  opacity: 1;
+}
+
+/* Theme variations */
+:root[data-theme="green"] .python-top {
+  fill: #00ff00;
+}
+
+:root[data-theme="green"] .python-bottom {
+  fill: #00cc00;
+}
+
+:root[data-theme="green"] .python-eye {
+  fill: #001100;
+}
+
+:root[data-theme="blue"] .python-top {
+  fill: #00ffff;
+}
+
+:root[data-theme="blue"] .python-bottom {
+  fill: #00cccc;
+}
+
+:root[data-theme="blue"] .python-eye {
+  fill: #001111;
+}

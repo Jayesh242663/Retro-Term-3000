@@ -9,14 +9,16 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "predeploy": "npm run build",
-    "deploy": "npx gh-pages -d dist"
+    "deploy": "npx gh-pages -d dist",
+    "mapscii-proxy": "node server/mapscii-proxy.js"
   },
   "dependencies": {
     "framer-motion": "^11.12.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.1.1",
-    "three": "^0.181.2"
+    "three": "^0.181.2",
+    "ws": "^8.17.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

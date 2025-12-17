@@ -515,13 +515,21 @@
 .github-link {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   padding: 10px 12px;
   background: rgba(255, 176, 0, 0.1);
   border: 1px solid var(--crt-text-dim, #cc8800);
   margin-top: 10px;
   color: var(--crt-text, #ffb000);
   text-shadow: 0 0 5px var(--crt-glow, rgba(255, 176, 0, 0.4));
+  text-decoration: none;
+  flex-wrap: wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.github-url {
+  flex: 1 1 auto;
 }
 
 .link-icon {
@@ -567,11 +575,12 @@
   }
   
   .nav-item {
-    padding: 10px 15px;
+    padding: 8px 12px;
     flex: 0 0 auto;
     white-space: nowrap;
     border-left: none;
     border-bottom: 3px solid transparent;
+    font-size: 1rem;
   }
   
   .nav-item.active {
@@ -584,7 +593,7 @@
   }
   
   .help-content {
-    padding: 12px 15px;
+    padding: 12px 14px;
   }
   
   .command-item {
@@ -594,6 +603,7 @@
   
   .command-name {
     min-width: auto;
+    font-size: 0.95rem;
   }
   
   .shortcut-item {
@@ -604,6 +614,7 @@
   
   .shortcut-key {
     min-width: auto;
+    font-size: 0.95rem;
   }
   
   .themes-grid {
@@ -611,6 +622,125 @@
   }
   
   .ascii-logo {
-    font-size: 0.35rem;
+    font-size: 0.32rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .help-header {
+    padding: 6px 10px;
+  }
+
+  .help-title {
+    font-size: 1rem;
+    gap: 6px;
+  }
+
+  .help-close {
+    font-size: 0.9rem;
+    padding: 4px 10px;
+  }
+
+  .help-nav {
+    padding: 0 4px;
+    gap: 6px;
+  }
+
+  .nav-item {
+    padding: 7px 10px;
+    font-size: 0.95rem;
+  }
+
+  .help-content {
+    padding: 10px 12px;
+  }
+
+  .section-title {
+    font-size: 1.1rem;
+  }
+
+  .section-desc {
+    font-size: 0.9rem;
+    margin-bottom: 14px;
+  }
+
+  .about-block {
+    padding: 10px 12px;
+  }
+
+  .about-block h3 {
+    font-size: 1rem;
+  }
+
+  .about-block p,
+  .about-block li,
+  .command-desc {
+    font-size: 0.95rem;
+  }
+
+  .command-name {
+    font-size: 0.9rem;
+  }
+
+  .shortcut-group {
+    padding: 10px 12px;
+  }
+
+  .shortcut-key {
+    min-width: 70px;
+    font-size: 0.9rem;
+  }
+
+  .shortcut-desc {
+    font-size: 0.95rem;
+  }
+
+  .theme-preview {
+    font-size: 0.8rem;
+    padding: 10px;
+  }
+
+  .theme-info h4 {
+    font-size: 0.9rem;
+  }
+
+  .theme-info p {
+    font-size: 0.8rem;
+  }
+
+  .creator-name {
+    font-size: 1.2rem;
+  }
+
+  .ascii-logo {
+    font-size: 0.3rem;
+  }
+
+  .ascii-footer pre {
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .nav-item {
+    padding: 6px 8px;
+    font-size: 0.9rem;
+  }
+
+  .help-content {
+    padding: 8px 10px;
+  }
+
+  .section-title {
+    font-size: 1rem;
+  }
+}
+
+/* Safe area support for notched phones */
+@supports (padding: max(0px)) {
+  .help-panel-overlay {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
   }
 }
