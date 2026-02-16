@@ -120,6 +120,29 @@ const CRTMonitor = ({ children, onPowerOn, onPowerOff, isScreenOnly = false }) =
           {/* Off screen message */}
           {!isPoweredOn && !isBooting && (
             <div className={`crt-off-message ${isScreenOnly ? 'screen-only-off-message' : ''}`}>
+              {isScreenOnly && (
+                <svg
+                  className="fullscreen-arrow"
+                  width="120"
+                  height="120"
+                  viewBox="0 0 120 120"
+                  style={{
+                    display: 'block',
+                    margin: '40px auto 16px auto',
+                    width: '20vw',
+                    height: '20vw',
+                    minWidth: 80,
+                    minHeight: 80,
+                    maxWidth: 180,
+                    maxHeight: 180,
+                    fill: 'var(--crt-text, #ffb000)',
+                    filter: 'drop-shadow(0 0 16px var(--crt-glow, rgba(255,176,0,0.7)))',
+                  }}
+                  aria-hidden="true"
+                >
+                  <polygon points="60,100 110,40 90,40 90,20 30,20 30,40 10,40" />
+                </svg>
+              )}
               <span>{isScreenOnly ? 'Click power button to start' : 'Press power button to start'}</span>
             </div>
           )}

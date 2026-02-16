@@ -158,6 +158,7 @@ const AVAILABLE_COMMANDS = [
   'dig', 'host', 'arp', 'route', 'ss', 'telnet', 'ftp', 'ssh',
   // Fun commands
   'neofetch', 'screenfetch', 'cowsay', 'fortune', 'cal', 'hack', 'mapscii',
+    'globe',
   // Session commands  
   'exit', 'logout', 'shutdown', 'poweroff', 'halt', 'sudo', 'theme',
 ];
@@ -165,6 +166,8 @@ const AVAILABLE_COMMANDS = [
 const MAPS_PROXY_URL = import.meta.env.VITE_MAPS_PROXY_URL || 'ws://localhost:8787';
 
 const Terminal = ({ onCommand, onShutdown, initialOutput = [], welcomeMessage = true }) => {
+    // Globe page state
+    const [showGlobePage, setShowGlobePage] = useState(false);
   const [history, setHistory] = useState(initialOutput);
   const [currentInput, setCurrentInput] = useState('');
   const [commandHistory, setCommandHistory] = useState([]);
@@ -820,6 +823,14 @@ const Terminal = ({ onCommand, onShutdown, initialOutput = [], welcomeMessage = 
             setHistory(prev => [...prev, { type: 'output', content: `rm: cannot remove '${targetArg}': ${result.error}` }]);
           }
           continue;
+
+
+
+            // globe - open the globe page
+            if (baseCommand === 'globe') {
+              setShowGlobePage(true);
+              return;
+            }
         }
 
         // Not a directory — attempt to remove file
@@ -2319,3 +2330,5 @@ default         192.168.1.1     0.0.0.0         UG    100    0        0 eth0
 };
 
 export default Terminal;
+
+

@@ -139,12 +139,28 @@ const HelpPanel = ({ isOpen, onClose }) => {
   ];
 
   const themes = [
-    { name: 'Green Phosphor', desc: 'Classic green CRT look', color: '#00ff00' },
-    { name: 'Amber', desc: 'Warm amber monochrome', color: '#ffb000' },
-    { name: 'Blue Ice', desc: 'Cool blue terminal', color: '#00d4ff' },
-    { name: 'Purple Haze', desc: 'Cyberpunk purple', color: '#bf00ff' },
-    { name: 'Matrix', desc: 'The Matrix inspired', color: '#00ff41' },
+    { id: 'green', name: 'Green Phosphor', desc: 'Classic green CRT look', color: '#00ff00' },
+    { id: 'amber', name: 'Amber', desc: 'Warm amber monochrome', color: '#ffb000' },
+    { id: 'blue', name: 'Blue Ice', desc: 'Cool blue terminal', color: '#00d4ff' },
+    { id: 'purple', name: 'Purple Haze', desc: 'Cyberpunk purple', color: '#bf00ff' },
+    { id: 'white', name: 'White Phosphor', desc: 'Clean white retro glow', color: '#f2f2f2' },
   ];
+
+  const [activeTheme, setActiveTheme] = useState(() => {
+    return localStorage.getItem('crt-theme') || 'amber';
+  });
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const storedTheme = localStorage.getItem('crt-theme') || 'amber';
+    setActiveTheme(storedTheme);
+  }, [isOpen]);
+
+  const applyTheme = (themeId) => {
+    document.documentElement.setAttribute('data-theme', themeId);
+    localStorage.setItem('crt-theme', themeId);
+    setActiveTheme(themeId);
+  };
 
   // Handle keyboard navigation
   useEffect(() => {
@@ -202,7 +218,7 @@ const HelpPanel = ({ isOpen, onClose }) => {
 
   const renderAbout = () => (
     <div className="help-section">
-      <h2 className="section-title">╔══ ABOUT RETRO-TERM 3000 ══╗</h2>
+      <h2 className="section-title">ABOUT RETRO-TERM 3000 </h2>
       
       <div className="about-block">
         <pre className="ascii-logo">{`
@@ -301,7 +317,7 @@ const HelpPanel = ({ isOpen, onClose }) => {
 
   const renderShortcuts = () => (
     <div className="help-section">
-      <h2 className="section-title">╔══ KEYBOARD SHORTCUTS ══╗</h2>
+      <h2 className="section-title">KEYBOARD SHORTCUTS </h2>
       <p className="section-desc">Master these keys to navigate like a pro</p>
       
       <div className="shortcuts-container">
@@ -368,8 +384,14 @@ const HelpPanel = ({ isOpen, onClose }) => {
       <p className="section-desc">Customize your terminal's appearance</p>
       
       <div className="themes-grid">
-        {themes.map((theme, index) => (
-          <div key={index} className="theme-card" style={{ '--theme-color': theme.color }}>
+        {themes.map((theme) => (
+          <button
+            key={theme.id}
+            type="button"
+            className={`theme-card ${activeTheme === theme.id ? 'active' : ''}`}
+            style={{ '--theme-color': theme.color }}
+            onClick={() => applyTheme(theme.id)}
+          >
             <div className="theme-preview">
               <div className="theme-preview-line">guest@retro:~$</div>
               <div className="theme-preview-line">neofetch</div>
@@ -378,13 +400,12 @@ const HelpPanel = ({ isOpen, onClose }) => {
               <h4>{theme.name}</h4>
               <p>{theme.desc}</p>
             </div>
-          </div>
+          </button>
         ))}
       </div>
 
       <div className="theme-tip">
-        <p>💡 Tip: Type <span className="cmd-highlight">theme</span> in the terminal to cycle through themes, 
-        or use the theme button in the top-right corner of the CRT monitor.</p>
+        <p>💡 Tip: Click a theme card to apply it instantly, or type <span className="cmd-highlight">theme</span> in the terminal to cycle.</p>
       </div>
     </div>
   );

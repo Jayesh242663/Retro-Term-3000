@@ -11,6 +11,7 @@
   --crt-glow: rgba(255, 176, 0, 0.6);
   --crt-glow-intense: rgba(255, 176, 0, 0.9);
   --crt-scanline: rgba(0, 0, 0, 0.15);
+  --crt-grid: rgba(255, 176, 0, 0.03);
   --crt-bezel: #2a2a2a;
   --crt-bezel-dark: #1a1a1a;
   --crt-bezel-light: #3a3a3a;
@@ -24,6 +25,40 @@
   --crt-glow: rgba(51, 255, 51, 0.6);
   --crt-glow-intense: rgba(51, 255, 51, 0.9);
   --crt-scanline: rgba(0, 0, 0, 0.18);
+  --crt-grid: rgba(51, 255, 51, 0.03);
+}
+
+/* Blue Theme */
+[data-theme="blue"] {
+  --crt-bg: #001018;
+  --crt-text: #00d4ff;
+  --crt-text-dim: #009cc0;
+  --crt-glow: rgba(0, 212, 255, 0.6);
+  --crt-glow-intense: rgba(0, 212, 255, 0.9);
+  --crt-scanline: rgba(0, 0, 0, 0.18);
+  --crt-grid: rgba(0, 212, 255, 0.03);
+}
+
+/* Purple Theme */
+[data-theme="purple"] {
+  --crt-bg: #120012;
+  --crt-text: #bf00ff;
+  --crt-text-dim: #7a00a3;
+  --crt-glow: rgba(191, 0, 255, 0.6);
+  --crt-glow-intense: rgba(191, 0, 255, 0.9);
+  --crt-scanline: rgba(0, 0, 0, 0.18);
+  --crt-grid: rgba(191, 0, 255, 0.03);
+}
+
+/* White Theme */
+[data-theme="white"] {
+  --crt-bg: #f2f2f2;
+  --crt-text: #141414;
+  --crt-text-dim: #4b4b4b;
+  --crt-glow: rgba(20, 20, 20, 0.35);
+  --crt-glow-intense: rgba(20, 20, 20, 0.6);
+  --crt-scanline: rgba(0, 0, 0, 0.08);
+  --crt-grid: rgba(20, 20, 20, 0.04);
 }
 
 /* ============================================

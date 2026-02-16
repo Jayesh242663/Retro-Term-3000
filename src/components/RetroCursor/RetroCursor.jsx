@@ -7,6 +7,7 @@ const RetroCursor = ({ containerRef }) => {
   const [isClicking, setIsClicking] = useState(false);
   const [isInsideScreen, setIsInsideScreen] = useState(false);
   const [trail, setTrail] = useState([]);
+  const trailIdRef = useRef(0);
 
   useEffect(() => {
     const handleMouseMove = (e) => {
@@ -34,7 +35,8 @@ const RetroCursor = ({ containerRef }) => {
             const newTrail = [...prev, { 
               x: e.clientX - rect.left, 
               y: e.clientY - rect.top, 
-              id: Date.now() 
+              id: trailIdRef.current++,
+              ts: Date.now()
             }];
             return newTrail.slice(-5);
           });
@@ -69,7 +71,8 @@ const RetroCursor = ({ containerRef }) => {
   // Clean up old trail points
   useEffect(() => {
     const interval = setInterval(() => {
-      setTrail(prev => prev.filter(point => Date.now() - point.id < 100));
+      const now = Date.now();
+      setTrail(prev => prev.filter(point => now - point.ts < 100));
     }, 50);
     return () => clearInterval(interval);
   }, []);

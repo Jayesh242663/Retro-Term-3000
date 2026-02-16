@@ -219,17 +219,11 @@ body {
   right: 0;
   bottom: 0;
   background-image: 
-    linear-gradient(rgba(255, 176, 0, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 176, 0, 0.03) 1px, transparent 1px);
+    linear-gradient(var(--crt-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--crt-grid) 1px, transparent 1px);
   background-size: 50px 50px;
   pointer-events: none;
   z-index: -1;
-}
-
-[data-theme="green"] .background-grid {
-  background-image: 
-    linear-gradient(rgba(51, 255, 51, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(51, 255, 51, 0.03) 1px, transparent 1px);
 }
 
 /* Attribution footer */

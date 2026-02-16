@@ -425,6 +425,9 @@
   background: rgba(0, 0, 0, 0.5);
   overflow: hidden;
   transition: all 0.15s ease;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
 }
 
 .theme-card:hover {
@@ -432,6 +435,18 @@
     0 0 15px var(--theme-color),
     inset 0 0 20px rgba(0, 0, 0, 0.5);
   transform: translateY(-2px);
+}
+
+.theme-card.active {
+  box-shadow:
+    0 0 18px var(--theme-color),
+    inset 0 0 24px rgba(0, 0, 0, 0.6);
+  transform: translateY(-1px);
+}
+
+.theme-card:focus-visible {
+  outline: 2px dashed var(--theme-color);
+  outline-offset: 2px;
 }
 
 .theme-preview {

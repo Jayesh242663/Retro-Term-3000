@@ -2,10 +2,8 @@ import { useState, useCallback, useEffect } from 'react';
 import CRTMonitor from './components/CRTMonitor';
 import Terminal from './components/Terminal';
 import { useTheme } from './components/ThemeSwitcher';
-import { playThemeSwitchSound, playErrorSound, toggleAmbientNoise, isAmbientNoisePlaying, startAmbientNoise, stopAmbientNoise, initAudio, playCRTOnSound, playCRTOffSound, playClickSound, toggleAllSounds } from './utils/sounds';
+import { playThemeSwitchSound, playErrorSound, startAmbientNoise, stopAmbientNoise, initAudio, playCRTOnSound, playCRTOffSound, toggleAllSounds } from './utils/sounds';
 import BootScreen from './components/BootScreen';
-import AboutPanel from './components/AboutPanel';
-import CheatSheet from './components/CheatSheet';
 import MobileWarning from './components/MobileWarning';
 import { 
   portfolioData, 
@@ -24,57 +22,10 @@ function App() {
   const [showBootScreen, setShowBootScreen] = useState(false);
   const [showTerminal, setShowTerminal] = useState(false);
   const [audioStarted, setAudioStarted] = useState(false);
-  const { theme, toggleTheme } = useTheme();
+  const [powerCycleKey, setPowerCycleKey] = useState(0);
+  const { toggleTheme } = useTheme();
   
-  // Panel collapse and fullscreen states
-  const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
-  const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isScreenOnly, setIsScreenOnly] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-
-  // Toggle panel handlers
-  const toggleLeftPanel = () => {
-    playClickSound();
-    setLeftPanelCollapsed(prev => !prev);
-  };
-
-  const toggleRightPanel = () => {
-    playClickSound();
-    setRightPanelCollapsed(prev => !prev);
-  };
-
-  const toggleFullscreen = () => {
-    playClickSound();
-    setIsFullscreen(prev => !prev);
-    if (isScreenOnly) setIsScreenOnly(false);
-  };
-
-  const toggleScreenOnly = () => {
-    playClickSound();
-    setIsScreenOnly(prev => !prev);
-    if (isFullscreen) setIsFullscreen(false);
-  };
-
-  // Exit fullscreen with Escape key (screen-only mode requires button click to exit)
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape') {
-        if (isFullscreen) setIsFullscreen(false);
-        // Note: ESC does not exit screen-only mode - use the toggle button instead
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isFullscreen]);
-
-  // Track mobile viewport to favor terminal-first layout on small screens
-  useEffect(() => {
-    const updateIsMobile = () => setIsMobile(window.matchMedia('(max-width: 1024px)').matches);
-    updateIsMobile();
-    window.addEventListener('resize', updateIsMobile);
-    return () => window.removeEventListener('resize', updateIsMobile);
-  }, []);
+  const isScreenOnly = true;
 
   // Handle power button press - start boot sequence
   const handlePowerOn = () => {
@@ -105,6 +56,11 @@ function App() {
     // Reset states
     setShowBootScreen(false);
     setShowTerminal(false);
+  };
+
+  const handleCommandShutdown = () => {
+    handlePowerOff();
+    setPowerCycleKey(prev => prev + 1);
   };
 
   // Handle boot screen completion
@@ -263,18 +219,7 @@ Repository:
     }
   }, [toggleTheme]);
 
-  // Determine layout class based on panel states
-  const layoutClass = isScreenOnly
-    ? 'screen-only-mode'
-    : isFullscreen 
-      ? 'fullscreen-mode' 
-      : (leftPanelCollapsed && rightPanelCollapsed) 
-        ? 'both-collapsed' 
-        : leftPanelCollapsed 
-          ? 'left-collapsed' 
-          : rightPanelCollapsed 
-            ? 'right-collapsed' 
-            : '';
+  const layoutClass = 'screen-only-mode';
 
   return (
     <div className={`app ${layoutClass}`}>
@@ -284,34 +229,8 @@ Repository:
       {/* Background grid effect */}
       <div className="background-grid" />
       
-      {/* Left side - About Panel (hidden on mobile for terminal-first experience) */}
-      {!isFullscreen && !isScreenOnly && !isMobile && (
-        <AboutPanel 
-          isCollapsed={leftPanelCollapsed} 
-          onToggle={toggleLeftPanel} 
-        />
-      )}
-      
-      {/* View toggle buttons */}
-      <div className="view-toggle-buttons">
-        <button 
-          className={`view-toggle-btn ${isFullscreen ? 'active' : ''}`}
-          onClick={toggleFullscreen}
-          title={isFullscreen ? 'Exit Fullscreen (Esc)' : 'Fullscreen Monitor'}
-        >
-          {isFullscreen ? '⊡' : '⛶'}
-        </button>
-        <button 
-          className={`view-toggle-btn ${isScreenOnly ? 'active' : ''}`}
-          onClick={toggleScreenOnly}
-          title={isScreenOnly ? 'Exit Screen Mode' : 'Screen Only Mode'}
-        >
-          {isScreenOnly ? '⊟' : '▣'}
-        </button>
-      </div>
-      
       {/* Main CRT Monitor - always visible */}
-      <CRTMonitor onPowerOn={handlePowerOn} onPowerOff={handlePowerOff} isScreenOnly={isScreenOnly}>
+      <CRTMonitor key={powerCycleKey} onPowerOn={handlePowerOn} onPowerOff={handlePowerOff} isScreenOnly={isScreenOnly}>
         {/* Boot Screen - shows inside monitor after power on */}
         {showBootScreen && (
           <BootScreen onComplete={handleBootComplete} duration={4000} />
@@ -321,19 +240,11 @@ Repository:
         {showTerminal && (
           <Terminal 
             onCommand={handleCommand}
-            onShutdown={handlePowerOff}
+            onShutdown={handleCommandShutdown}
             welcomeMessage={true}
           />
         )}
       </CRTMonitor>
-
-      {/* Right side - Cheat Sheet (hidden on mobile for terminal-first experience) */}
-      {!isFullscreen && !isScreenOnly && !isMobile && (
-        <CheatSheet 
-          isCollapsed={rightPanelCollapsed} 
-          onToggle={toggleRightPanel} 
-        />
-      )}
 
       {/* Attribution */}
       
