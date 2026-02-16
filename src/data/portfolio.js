@@ -7,7 +7,7 @@ export const portfolioData = {
   linkedin: "https://linkedin.com/in/jayeshchanne",
   location: "Mumbai, India",
 
-  about: "Results-driven software engineer with 3+ years of learning experience in developing scalable web and desktop applications. Strong background in full-stack development, data structures, and system design. I collaborate across teams to deliver user-centric, high-quality solutions.",
+  about: "Information Technology undergraduate with strong hands-on experience in designing and building full-stack web applications. Proficient in modern frontend frameworks, backend API development, and relational database design. Experienced in implementing secure authentication, role-based access control, and data integrity mechanisms in real-world projects. Demonstrates solid problem-solving ability, system-level thinking, and a keen interest in building reliable, user-focused software solutions",
 
   skills: {
     languages: ["Python", "JavaScript", "C", "Java"],
@@ -40,35 +40,25 @@ export const portfolioData = {
 
   education: [
     {
-      degree: "Bachelor of Engineering in Computer Science",
-      institution: "Your University Name",
-      period: "2020 - 2024",
-      details: "Focused on software engineering, data structures, algorithms, and system design.",
+      degree: "Bachelor of Engineering in Information Technology",
+      institution: "Mumbai University",
+      period: "2022 - 2027",
+      details: "Focused on Web Development, AI & ML, data structures, algorithms, and system design.",
     },
   ],
 
   certifications: [
     {
-      name: "Python for Everybody Specialization",
-      issuer: "Coursera - University of Michigan",
-      date: "2023",
-      link: "https://www.coursera.org/account/accomplishments/specialization/certificate/YOURCODE",
+      name: "The Complete Full-Stack Web Development Bootcamp",
+      issuer: "Udemy (Dr. Angela Yu)",
+      date: "2025",
+      link: "https://www.udemy.com/certificate/UC-21e0129e-be9a-48aa-a4d0-5db42fa53c0a/",
     },
     {
-      name: "Web Development Bootcamp",
-      issuer: "Udemy",
-      date: "2023",
-      link: "https://www.udemy.com/certificate/YOURCODE",
-    },
-    {
-      name: "Git & GitHub Essentials",
-      issuer: "LinkedIn Learning",
-      date: "2022",
-    },
-    {
-      name: "Database Management Systems",
-      issuer: "NPTEL",
-      date: "2022",
+      name: "100 Days of Code™: The Complete Python Pro Bootcamp",
+      issuer: "Udemy (Dr. Angela Yu)",
+      date: "2024",
+      link: "https://www.udemy.com/certificate/UC-a7425637-c8a8-4839-b725-ae08543fd1e1/",
     },
   ],
 };

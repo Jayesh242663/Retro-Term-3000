@@ -311,6 +311,7 @@
   flex-direction: column;
   opacity: 0;
   transition: opacity 0.5s ease;
+  cursor: auto; /* Ensure cursor visibility inside crt-content */
 }
 
 .crt-content.visible {
@@ -418,44 +419,42 @@
   border: 3px solid #0a0a0a;
   cursor: pointer;
   box-shadow: 
-    /* Outer ring */
     0 0 0 2px #333,
     0 0 0 4px #1a1a1a,
-    /* 3D depth */
     0 6px 12px rgba(0, 0, 0, 0.6),
     0 3px 6px rgba(0, 0, 0, 0.4),
-    /* Inner highlight */
     inset 0 2px 4px rgba(255, 255, 255, 0.1),
     inset 0 -4px 8px rgba(0, 0, 0, 0.4);
-  transition: all 0.1s ease;
+  transition: none;
   outline: none;
 }
 
 .crt-power-button:hover {
   background: linear-gradient(180deg, 
-    #555 0%, 
-    #444 20%,
-    #333 50%,
-    #222 100%
+    #4a4a4a 0%, 
+    #3a3a3a 20%,
+    #2a2a2a 50%,
+    #1a1a1a 100%
   );
   box-shadow: 
-    0 0 0 2px #444,
+    0 0 0 2px #333,
     0 0 0 4px #1a1a1a,
     0 6px 12px rgba(0, 0, 0, 0.6),
     0 3px 6px rgba(0, 0, 0, 0.4),
-    inset 0 2px 4px rgba(255, 255, 255, 0.15),
+    inset 0 2px 4px rgba(255, 255, 255, 0.1),
     inset 0 -4px 8px rgba(0, 0, 0, 0.4);
 }
 
 .crt-power-button.pressed,
 .crt-power-button:active {
-  transform: translateY(2px);
+  transform: none;
   box-shadow: 
     0 0 0 2px #333,
     0 0 0 4px #1a1a1a,
-    0 2px 4px rgba(0, 0, 0, 0.6),
-    inset 0 4px 8px rgba(0, 0, 0, 0.5),
-    inset 0 -2px 4px rgba(255, 255, 255, 0.05);
+    0 6px 12px rgba(0, 0, 0, 0.6),
+    0 3px 6px rgba(0, 0, 0, 0.4),
+    inset 0 2px 4px rgba(255, 255, 255, 0.1),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.4);
 }
 
 .crt-power-button.powered-on {
@@ -887,12 +886,7 @@
   align-items: center;
   gap: 15px;
   z-index: 100;
-  animation: pulse-power 2s ease-in-out infinite;
-}
-
-@keyframes pulse-power {
-  0%, 100% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); }
-  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+  cursor: auto; /* Ensure cursor visibility in desktop view */
 }
 
 .screen-only-power-area .crt-power-button {
@@ -1005,4 +999,8 @@
 
 .screen-only-off-message:hover .fullscreen-arrow {
   opacity: 1;
+}
+
+body {
+  cursor: auto; /* Reset cursor visibility globally */
 }

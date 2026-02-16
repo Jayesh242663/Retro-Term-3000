@@ -223,21 +223,24 @@ const InfoPanel = ({ isOpen, onClose }) => {
             ))}
           </div>
 
-          {/* Education & Certifications */}
+          {/* Education */}
           <div className="data-section">
             <div className="section-header">
               <span className="section-icon">◆</span>
-              EDUCATION & CERTIFICATIONS
+              EDUCATION
             </div>
-            
             {portfolioData.education && portfolioData.education.map((edu, index) => (
               <div key={index} className="experience-item">
                 <div className="experience-header">
-                  <span className="experience-role">{edu.degree}</span>
+                  <span className="experience-role">{edu.degree === 'Computer Science' ? 'Information Technology' : edu.degree}</span>
                   <span className="experience-period">{edu.period}</span>
                 </div>
-                <div className="experience-company">{edu.institution}</div>
-                {edu.details && <div className="experience-desc">{edu.details}</div>}
+                <div className="experience-company">{edu.institution === 'Mumbai University' ? 'Mumbai University' : edu.institution}</div>
+                {edu.details && (
+                  <div className="experience-desc">
+                    {edu.details.replace('focused on Web Development', 'focused on Web Development and AI & ML')}
+                  </div>
+                )}
               </div>
             ))}
           </div>
