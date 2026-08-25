@@ -1,4 +1,5 @@
 import RetroDialog from '../RetroDialog';
+import RetroIcon from '../RetroIcon';
 import './CheatSheet.css';
 
 const CheatSheet = ({ isCollapsed, onToggle }) => {
@@ -91,12 +92,28 @@ const CheatSheet = ({ isCollapsed, onToggle }) => {
               <div className="cmd-group-title">EASTER EGGS</div>
               <div className="cmd-list">
                 <div className="cmd-item">
+                  <span className="cmd">map</span>
+                  <span className="desc">Cyber radar map</span>
+                </div>
+                <div className="cmd-item">
+                  <span className="cmd">globe</span>
+                  <span className="desc">3D ASCII globe</span>
+                </div>
+                <div className="cmd-item">
+                  <span className="cmd">tetris</span>
+                  <span className="desc">Retro arcade game</span>
+                </div>
+                <div className="cmd-item">
+                  <span className="cmd">music</span>
+                  <span className="desc">8-bit tape player</span>
+                </div>
+                <div className="cmd-item">
                   <span className="cmd">hello</span>
                   <span className="desc">Say hi!</span>
                 </div>
                 <div className="cmd-item">
                   <span className="cmd">coffee</span>
-                  <span className="desc">Get coffee ☕</span>
+                  <span className="desc">Get coffee <RetroIcon name="coffee" size="13px" /></span>
                 </div>
                 <div className="cmd-item">
                   <span className="cmd">matrix</span>
@@ -104,7 +121,7 @@ const CheatSheet = ({ isCollapsed, onToggle }) => {
                 </div>
                 <div className="cmd-item">
                   <span className="cmd">sudo</span>
-                  <span className="desc">Try it... 😉</span>
+                  <span className="desc">Try it... <RetroIcon name="wink" size="13px" /></span>
                 </div>
               </div>
             </div>

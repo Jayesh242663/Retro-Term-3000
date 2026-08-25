@@ -274,8 +274,8 @@
 }
 
 .skill-tag {
-  padding: 4px 10px;
-  background: rgba(255, 176, 0, 0.15);
+  padding: 6px 12px;
+  background: rgba(255, 176, 0, 0.12);
   border: 1px solid var(--crt-text-dim, #cc8800);
   color: var(--crt-text, #ffb000);
   font-size: 0.85rem;
@@ -283,12 +283,16 @@
   transition: all 0.2s ease;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  min-height: 32px;
+  cursor: pointer;
 }
 
 .skill-tag:hover {
   background: rgba(255, 176, 0, 0.25);
-  box-shadow: 0 0 8px var(--crt-glow, rgba(255, 176, 0, 0.4));
+  border-color: var(--crt-text, #ffb000);
+  box-shadow: 0 0 10px var(--crt-glow, rgba(255, 176, 0, 0.4));
+  transform: translateY(-1px);
 }
 
 .skill-tag.soft-skill {

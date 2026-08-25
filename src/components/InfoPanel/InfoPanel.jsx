@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { playEnterSound } from '../../utils/sounds';
 import { portfolioData } from '../../data/portfolio';
-import PythonIcon from '../PythonIcon';
+import TechIcon from '../TechIcon';
 import './InfoPanel.css';
 
 const InfoPanel = ({ isOpen, onClose }) => {
@@ -143,12 +143,8 @@ const InfoPanel = ({ isOpen, onClose }) => {
                 <span className="matrix-label">PROGRAMMING LANGUAGES</span>
                 <div className="matrix-tags">
                   {portfolioData.skills.languages.map((skill, i) => (
-                    <span key={i} className="skill-tag">
-                      {skill.toLowerCase() === 'python' ? (
-                        <PythonIcon size="18px" />
-                      ) : (
-                        skill
-                      )}
+                    <span key={i} className="skill-tag" title={skill}>
+                      <TechIcon name={skill} size="18px" />
                     </span>
                   ))}
                 </div>
@@ -158,7 +154,9 @@ const InfoPanel = ({ isOpen, onClose }) => {
                 <span className="matrix-label">FRONTEND TECHNOLOGIES</span>
                 <div className="matrix-tags">
                   {portfolioData.skills.frontend.map((skill, i) => (
-                    <span key={i} className="skill-tag">{skill}</span>
+                    <span key={i} className="skill-tag" title={skill}>
+                      <TechIcon name={skill} size="18px" />
+                    </span>
                   ))}
                 </div>
               </div>
@@ -167,7 +165,9 @@ const InfoPanel = ({ isOpen, onClose }) => {
                 <span className="matrix-label">BACKEND TECHNOLOGIES</span>
                 <div className="matrix-tags">
                   {portfolioData.skills.backend.map((skill, i) => (
-                    <span key={i} className="skill-tag">{skill}</span>
+                    <span key={i} className="skill-tag" title={skill}>
+                      <TechIcon name={skill} size="18px" />
+                    </span>
                   ))}
                 </div>
               </div>
@@ -176,7 +176,9 @@ const InfoPanel = ({ isOpen, onClose }) => {
                 <span className="matrix-label">DATABASE SYSTEMS</span>
                 <div className="matrix-tags">
                   {portfolioData.skills.databases.map((skill, i) => (
-                    <span key={i} className="skill-tag">{skill}</span>
+                    <span key={i} className="skill-tag" title={skill}>
+                      <TechIcon name={skill} size="18px" />
+                    </span>
                   ))}
                 </div>
               </div>
@@ -185,7 +187,9 @@ const InfoPanel = ({ isOpen, onClose }) => {
                 <span className="matrix-label">TOOLS & PLATFORMS</span>
                 <div className="matrix-tags">
                   {portfolioData.skills.tools.map((skill, i) => (
-                    <span key={i} className="skill-tag">{skill}</span>
+                    <span key={i} className="skill-tag" title={skill}>
+                      <TechIcon name={skill} size="18px" />
+                    </span>
                   ))}
                 </div>
               </div>

@@ -1,0 +1,76 @@
+/* Retro UI Icon styles */
+.retro-icon {
+  display: inline-block;
+  vertical-align: middle;
+  filter: drop-shadow(0 0 2px var(--crt-glow, rgba(255, 176, 0, 0.4)));
+  transition: all 0.2s ease;
+}
+
+.retro-icon:hover {
+  filter: drop-shadow(0 0 5px var(--crt-glow, rgba(255, 176, 0, 0.8)));
+}
+
+/* Primary phosphor elements */
+.retro-icon .retro-primary {
+  fill: var(--crt-text, #ffb000);
+}
+
+/* Secondary dimmer phosphor elements */
+.retro-icon .retro-secondary {
+  fill: var(--crt-text-dim, #cc8800);
+}
+
+/* Stroke based primary elements */
+.retro-icon .retro-stroke-primary {
+  stroke: var(--crt-text, #ffb000);
+}
+
+/* Stroke based secondary elements */
+.retro-icon .retro-stroke-dim {
+  stroke: var(--crt-text-dim, #cc8800);
+}
+
+/* Theme variations */
+:root[data-theme="green"] .retro-primary,
+:root[data-theme="green"] .retro-stroke-primary {
+  fill: #00ff00;
+  stroke: #00ff00;
+}
+:root[data-theme="green"] .retro-secondary,
+:root[data-theme="green"] .retro-stroke-dim {
+  fill: #00cc00;
+  stroke: #00cc00;
+}
+
+:root[data-theme="blue"] .retro-primary,
+:root[data-theme="blue"] .retro-stroke-primary {
+  fill: #00ffff;
+  stroke: #00ffff;
+}
+:root[data-theme="blue"] .retro-secondary,
+:root[data-theme="blue"] .retro-stroke-dim {
+  fill: #00cccc;
+  stroke: #00cccc;
+}
+
+:root[data-theme="purple"] .retro-primary,
+:root[data-theme="purple"] .retro-stroke-primary {
+  fill: #df80ff;
+  stroke: #df80ff;
+}
+:root[data-theme="purple"] .retro-secondary,
+:root[data-theme="purple"] .retro-stroke-dim {
+  fill: #aa00ff;
+  stroke: #aa00ff;
+}
+
+:root[data-theme="white"] .retro-primary,
+:root[data-theme="white"] .retro-stroke-primary {
+  fill: #ffffff;
+  stroke: #ffffff;
+}
+:root[data-theme="white"] .retro-secondary,
+:root[data-theme="white"] .retro-stroke-dim {
+  fill: #a0a0a0;
+  stroke: #a0a0a0;
+}

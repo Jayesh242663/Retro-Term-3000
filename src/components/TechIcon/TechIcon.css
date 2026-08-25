@@ -1,0 +1,12 @@
+/* Retro Tech Icon styles */
+.tech-icon {
+  display: inline-block;
+  vertical-align: middle;
+  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.25));
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tech-icon:hover {
+  filter: drop-shadow(0 0 7px var(--crt-glow, rgba(255, 176, 0, 0.8)));
+  transform: scale(1.2);
+}

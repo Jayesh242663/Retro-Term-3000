@@ -4,6 +4,15 @@ import FileExplorer from '../FileExplorer';
 import NvimEditor from '../NvimEditor';
 import HelpPanel from '../HelpPanel';
 import InfoPanel from '../InfoPanel';
+import Tetris from '../Tetris';
+import MusicPlayer from '../MusicPlayer';
+import Arcade84 from '../Arcade84';
+import CyberMapModal from '../CyberMap';
+import TopTaskManager from '../TopTaskManager';
+import { TRACKS, playTrack, playStreamTrack, pauseTrack, stopTrack, nextTrack, prevTrack, setVolume, getPlaybackState } from '../MusicPlayer/chiptuneSynth';
+import { stopTetrisMusic } from '../Tetris/tetrisAudio';
+import { searchTracks, formatTime } from '../MusicPlayer/musicSearch';
+import RetroIcon from '../RetroIcon';
 import resumeMd from '../../content/resume.md?raw';
 import { getFileContent, saveFile, fileExists, normalizePath, getFileType, getFileName, listFiles, getFileStructure, createDirectory, directoryExists, deleteFile, deleteDirectory, moveFile, copyFile, getFileSize, countLines, countWords, searchInFile, getHead, getTail, appendToFile, getDirectory } from '../../utils/fileSystem';
 import './Terminal.css';
@@ -155,9 +164,9 @@ const AVAILABLE_COMMANDS = [
   'df', 'free', 'ps', 'top', 'htop', 'id', 'env', 'printenv', 'which', 'man',
   // Networking commands
   'ping', 'ifconfig', 'ip', 'netstat', 'curl', 'wget', 'traceroute', 'nslookup',
-  'dig', 'host', 'arp', 'route', 'ss', 'telnet', 'ftp', 'ssh',
+  'dig', 'host', 'arp', 'route', 'ss', 'telnet', 'ftp', 'ssh', 'map', 'worldmap', 'radar', 'telemetry',
   // Fun commands
-  'neofetch', 'screenfetch', 'cowsay', 'fortune', 'cal', 'hack', 'mapscii',
+  'neofetch', 'screenfetch', 'cowsay', 'fortune', 'cal', 'hack', 'mapscii', 'tetris', 'music', 'radio', 'player',
     'globe',
   // Session commands  
   'exit', 'logout', 'shutdown', 'poweroff', 'halt', 'sudo', 'theme',
@@ -185,6 +194,17 @@ const Terminal = ({ onCommand, onShutdown, initialOutput = [], welcomeMessage = 
   const [showNvimEditor, setShowNvimEditor] = useState(false);
   const [showHelpPanel, setShowHelpPanel] = useState(false);
   const [showInfoPanel, setShowInfoPanel] = useState(false);
+  const [showTetris, setShowTetris] = useState(false);
+  const [showArcade, setShowArcade] = useState(false);
+  const [arcadeInitialGame, setArcadeInitialGame] = useState(null);
+  const [showMusicPlayer, setShowMusicPlayer] = useState(false);
+  const [isMusicPlayerMinimized, setIsMusicPlayerMinimized] = useState(false);
+  const [showCyberMap, setShowCyberMap] = useState(false);
+  const [cyberMapMode, setCyberMapMode] = useState('map');
+  const [showTopTaskManager, setShowTopTaskManager] = useState(false);
+  const [isGameLoadingPrompt, setIsGameLoadingPrompt] = useState(false);
+  const isMusicPlayerActive = showMusicPlayer && !isMusicPlayerMinimized;
+  const isGameActive = showArcade || showTetris;
   const [editorFile, setEditorFile] = useState(null);
   const [editorContent, setEditorContent] = useState('');
   const [fileSystemVersion, setFileSystemVersion] = useState(0); // Force re-render on file changes
@@ -200,13 +220,69 @@ const Terminal = ({ onCommand, onShutdown, initialOutput = [], welcomeMessage = 
   const [lastTabInput, setLastTabInput] = useState(''); // Track input when tab was first pressed
   const [mapsciiActive, setMapsciiActive] = useState(false); // Track live mapscii session
   const [mapsciiBuffer, setMapsciiBuffer] = useState(''); // Accumulated mapscii screen buffer
-  // note: interactive confirmations removed; deletions run immediately
+  const [telemetryTime, setTelemetryTime] = useState('');
+  const [ipCountry, setIpCountry] = useState('DETECTING...');
+
   const inputRef = useRef(null);
   const terminalRef = useRef(null);
   const contentRef = useRef(null);
   const menuRefs = useRef([]);
   const measureRef = useRef(null);
   const mapsciiSocketRef = useRef(null);
+
+  // Live Date & Time Clock (1s interval)
+  useEffect(() => {
+    const updateClock = () => {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const date = String(now.getDate()).padStart(2, '0');
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+      const dayName = days[now.getDay()];
+      setTelemetryTime(`${dayName} ${year}-${month}-${date} ${hours}:${minutes}:${seconds}`);
+    };
+
+    updateClock();
+    const interval = setInterval(updateClock, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Fetch Viewer Country based on IP
+  useEffect(() => {
+    let isMounted = true;
+    const fetchCountry = async () => {
+      try {
+        const res = await fetch('https://ipwho.is/', { signal: AbortSignal.timeout(3500) });
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted && data.success !== false) {
+            setIpCountry((data.country || data.country_code || 'ONLINE').toUpperCase());
+            return;
+          }
+        }
+      } catch (e) {}
+
+      try {
+        const res = await fetch('https://ipapi.co/json/', { signal: AbortSignal.timeout(3000) });
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted) {
+            setIpCountry((data.country_name || data.country_code || 'ONLINE').toUpperCase());
+          }
+        }
+      } catch (e) {
+        if (isMounted) {
+          setIpCountry('GLOBAL');
+        }
+      }
+    };
+
+    fetchCountry();
+    return () => { isMounted = false; };
+  }, []);
 
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
@@ -527,6 +603,175 @@ const Terminal = ({ onCommand, onShutdown, initialOutput = [], welcomeMessage = 
     // profile/dossier - open the info panel with surveillance-style layout
     if (baseCommand === 'profile' || baseCommand === 'dossier' || baseCommand === 'info') {
       setShowInfoPanel(true);
+      return;
+    }
+
+    // game / games / arcade / play / tetris / snake / invaders / pong - Fullscreen 1984 Retro Arcade System
+    if (
+      baseCommand === 'game' ||
+      baseCommand === 'games' ||
+      baseCommand === 'arcade' ||
+      baseCommand === 'play' ||
+      baseCommand === 'tetris' ||
+      baseCommand === 'snake' ||
+      baseCommand === 'invaders' ||
+      baseCommand === 'spaceinvaders' ||
+      baseCommand === 'pong'
+    ) {
+      // 1. Hide input prompt & clear the terminal
+      setIsGameLoadingPrompt(true);
+      setHistory([]);
+      setShowWelcome(false);
+
+      // 2. Show the 3 lines one by one with realistic terminal pauses
+      await new Promise(resolve => setTimeout(resolve, 300));
+      setHistory([{ type: 'output', content: '> Loading PlayStation84 Smart Arcade™ Premium Plan' }]);
+      
+      await new Promise(resolve => setTimeout(resolve, 700));
+      setHistory(prev => [...prev, { type: 'output', content: '> Steps Taken Today: 2,845' }]);
+      
+      await new Promise(resolve => setTimeout(resolve, 700));
+      setHistory(prev => [...prev, { type: 'output', content: '> Cost: 0.000002 BTC Per Step' }]);
+
+      // 3. Pause before smooth CRT ignition into fullscreen cabinet
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      if (baseCommand === 'tetris') {
+        setArcadeInitialGame('tetris');
+      } else if (baseCommand === 'snake') {
+        setArcadeInitialGame('snake');
+      } else if (baseCommand === 'invaders' || baseCommand === 'spaceinvaders') {
+        setArcadeInitialGame('invaders');
+      } else if (baseCommand === 'pong') {
+        setArcadeInitialGame('pong');
+      } else {
+        setArcadeInitialGame(null);
+      }
+      setShowArcade(true);
+      return;
+    }
+
+    // music / radio / player - 8-bit chiptune cassette deck & universal search streamer
+    if (baseCommand === 'music' || baseCommand === 'radio' || baseCommand === 'player') {
+      const subCmd = (args[0] || '').toLowerCase();
+
+      // music search <query>
+      if (subCmd === 'search') {
+        const query = args.slice(1).join(' ');
+        if (!query) {
+          setHistory(prev => [...prev, { type: 'output', content: 'Usage: music search <song title, artist, or genre>' }]);
+          return;
+        }
+        setHistory(prev => [...prev, { type: 'output', content: `🔍 Searching audio networks for "${query}"...` }]);
+        try {
+          const results = await searchTracks(query);
+          if (results.length === 0) {
+            setHistory(prev => [...prev, { type: 'output', content: `No tracks found for "${query}". Try another query.` }]);
+            return;
+          }
+          const resultsTable = results.slice(0, 6).map((t, idx) => `  [${idx + 1}] ${t.title.slice(0, 28).padEnd(28)} | ${t.artist.slice(0, 20).padEnd(20)} | ${formatTime(t.duration)}`).join('\n');
+          setHistory(prev => [...prev, {
+            type: 'output',
+            content: `╔═════════════════════════════════════════════════════════════════════════╗\n║                      UNIVERSAL MUSIC SEARCH RESULTS                     ║\n╠═════════════════════════════════════════════════════════════════════════╣\n${resultsTable}\n╚═════════════════════════════════════════════════════════════════════════╝\nType 'music play ${results[0].title}' to play, or 'music' for GUI.`
+          }]);
+        } catch (e) {
+          setHistory(prev => [...prev, { type: 'output', content: `Search failed. Please try again.` }]);
+        }
+        return;
+      }
+
+      if (subCmd === 'list') {
+        const trackListStr = TRACKS.map(t => `  [${t.id}] ${t.title.padEnd(24)} | ${t.genre.padEnd(22)} | ${t.bpm} BPM | 00:${t.duration}`).join('\n');
+        setHistory(prev => [...prev, {
+          type: 'output',
+          content: `╔═════════════════════════════════════════════════════════════════════════╗\n║                     RETRO-DECK 3000 CHIPTUNE TRACKS                     ║\n╠═════════════════════════════════════════════════════════════════════════╣\n${trackListStr}\n╚═════════════════════════════════════════════════════════════════════════╝\nType 'music play <id or song name>' or 'music search <query>'.`
+        }]);
+        return;
+      }
+
+      if (subCmd === 'play') {
+        const query = args.slice(1).join(' ');
+
+        // 1. Check if query is a numeric ID for built-in tracks (1-6)
+        const trackId = parseInt(query, 10);
+        if (!isNaN(trackId) && trackId >= 1 && trackId <= TRACKS.length && String(trackId) === query.trim()) {
+          playTrack(trackId - 1);
+          const t = TRACKS[trackId - 1];
+          setHistory(prev => [...prev, { type: 'output', content: `♪ Now playing: [${t.id}] ${t.title} (${t.bpm} BPM)` }]);
+          return;
+        }
+
+        // 2. If query is a text search or URL, search & stream track
+        if (query.trim().length > 0) {
+          setHistory(prev => [...prev, { type: 'output', content: `🔍 Searching & streaming "${query}" on Cassette Deck...` }]);
+          try {
+            const results = await searchTracks(query);
+            if (results.length > 0) {
+              const topTrack = results[0];
+              playStreamTrack(topTrack);
+              setHistory(prev => [...prev, {
+                type: 'output',
+                content: `♪ Streaming on Cassette Deck: "${topTrack.title}" by ${topTrack.artist} (${formatTime(topTrack.duration)})`
+              }]);
+            } else {
+              setHistory(prev => [...prev, { type: 'output', content: `No tracks found matching "${query}".` }]);
+            }
+          } catch (e) {
+            setHistory(prev => [...prev, { type: 'output', content: `Could not load audio stream.` }]);
+          }
+          return;
+        }
+
+        // Resume active playback
+        playTrack();
+        const state = getPlaybackState();
+        setHistory(prev => [...prev, { type: 'output', content: `♪ Now playing: ${state.track.title}` }]);
+        return;
+      }
+
+      if (subCmd === 'pause' || subCmd === 'stop') {
+        pauseTrack();
+        setHistory(prev => [...prev, { type: 'output', content: '❚❚ Music playback paused.' }]);
+        return;
+      }
+      if (subCmd === 'next') {
+        nextTrack();
+        const state = getPlaybackState();
+        setHistory(prev => [...prev, { type: 'output', content: `⏭ Next track: ${state.track.title}` }]);
+        return;
+      }
+      if (subCmd === 'prev') {
+        prevTrack();
+        const state = getPlaybackState();
+        setHistory(prev => [...prev, { type: 'output', content: `⏮ Previous track: ${state.track.title}` }]);
+        return;
+      }
+      if (subCmd === 'vol' || subCmd === 'volume') {
+        const val = parseInt(args[1], 10);
+        if (!isNaN(val)) {
+          setVolume(val / 100);
+          setHistory(prev => [...prev, { type: 'output', content: `Volume set to: ${val}%` }]);
+        } else {
+          setHistory(prev => [...prev, { type: 'output', content: `Usage: music vol <0-100>` }]);
+        }
+        return;
+      }
+      // Default: open the full Cassette Deck GUI
+      setShowMusicPlayer(true);
+      return;
+    }
+
+    // map / worldmap / radar - Cyber Radar World Map
+    if (baseCommand === 'map' || baseCommand === 'worldmap' || baseCommand === 'radar' || baseCommand === 'telemetry') {
+      setCyberMapMode('map');
+      setShowCyberMap(true);
+      return;
+    }
+
+    // globe - 3D ASCII Globe Telemetry
+    if (baseCommand === 'globe') {
+      setCyberMapMode('globe');
+      setShowCyberMap(true);
       return;
     }
 
@@ -1248,19 +1493,9 @@ Swap:       2097152           0     2097152`;
       return;
     }
 
-    // top (simplified)
-    if (baseCommand === 'top' || baseCommand === 'htop') {
-      const topOutput = `top - ${new Date().toLocaleTimeString()} up 42 min, 1 user, load average: 0.00, 0.01, 0.05
-Tasks:   4 total,   1 running,   3 sleeping,   0 stopped,   0 zombie
-%Cpu(s):  2.0 us,  1.0 sy,  0.0 ni, 96.5 id,  0.5 wa,  0.0 hi,  0.0 si
-MiB Mem:   8000.0 total,   3456.8 free,   2345.7 used,   2197.5 buff/cache
-
-  PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND
-   42 guest     20   0  123456  12345   8765 S   1.0   0.2   0:01.23 terminal
-    1 root      20   0   65432   4321   3210 S   0.0   0.1   0:00.10 init
-
-(Press q to exit - simulated)`;
-      await typeOutputLineByLine(topOutput);
+    // top / htop / taskmanager - interactive cool-retro-term Ubuntu task manager
+    if (baseCommand === 'top' || baseCommand === 'htop' || baseCommand === 'taskmanager') {
+      setShowTopTaskManager(true);
       return;
     }
 
@@ -1333,8 +1568,25 @@ EDITOR=nvim`;
       return;
     }
 
-    // init 0 / shutdown / poweroff - turn off the monitor
+    // init 0 / shutdown / poweroff - turn off the monitor and stop everything
     if (command === 'init 0' || baseCommand === 'shutdown' || baseCommand === 'poweroff' || baseCommand === 'halt') {
+      // 1. Immediately halt all playing audio, music synth, YouTube streams, games, and connections
+      try { stopTrack(); } catch (e) {}
+      try { stopTetrisMusic(); } catch (e) {}
+      setShowArcade(false);
+      setShowTetris(false);
+      setShowMusicPlayer(false);
+      setIsMusicPlayerMinimized(false);
+      setShowCyberMap(false);
+      setShowTopTaskManager(false);
+      setShowFileExplorer(false);
+      setShowNvimEditor(false);
+      setShowHelpPanel(false);
+      setShowInfoPanel(false);
+      if (mapsciiSocketRef.current) {
+        try { mapsciiSocketRef.current.close(); } catch (e) {}
+      }
+
       setHistory(prev => [...prev, { type: 'output', content: '' }]);
       
       // Show shutdown sequence
@@ -1343,8 +1595,8 @@ EDITOR=nvim`;
         '',
         'The system is going down for poweroff NOW!',
         '',
-        'Stopping all processes...',
-        'Unmounting filesystems...',
+        'Stopping all processes and background audio...',
+        'Unmounting filesystems and network sockets...',
         'Syncing disks...',
         '',
         'System halted.',
@@ -1765,6 +2017,11 @@ default         192.168.1.1     0.0.0.0         UG    100    0        0 eth0
 
   // Handle keyboard navigation
   const handleKeyDown = (e) => {
+    if (isMusicPlayerActive || isGameActive) {
+      e.preventDefault();
+      return;
+    }
+
     if (e.key === 'ArrowUp') {
       e.preventDefault();
       if (commandHistory.length > 0) {
@@ -1923,6 +2180,8 @@ default         192.168.1.1     0.0.0.0         UG    100    0        0 eth0
   // Handle global keyboard events for menu navigation
   useEffect(() => {
     const handleGlobalKeyDown = (e) => {
+      if (isMusicPlayerActive || isGameActive) return;
+
       // Handle Tab key for auto-completion when input is focused
       if (e.key === 'Tab') {
         e.preventDefault();
@@ -2140,20 +2399,36 @@ default         192.168.1.1     0.0.0.0         UG    100    0        0 eth0
     >
       {/* Terminal Menu Bar - Always visible */}
       <div className="terminal-menubar">
-        {menuItems.map((item, index) => (
-          <span
-            key={item}
-            ref={el => menuRefs.current[index] = el}
-            className={`terminal-menu-item ${focusedMenuIndex === index ? 'focused' : ''} ${
-              (item === 'Help' && showHelpPanel) || 
-              (item === 'File' && (showFileExplorer || showNvimEditor)) ? 'active' : ''
-            }`}
-            onClick={() => handleMenuClick(item)}
-            tabIndex={0}
-          >
-            {item}
-          </span>
-        ))}
+        <div className="terminal-menubar-left">
+          {menuItems.map((item, index) => (
+            <span
+              key={item}
+              ref={el => menuRefs.current[index] = el}
+              className={`terminal-menu-item ${focusedMenuIndex === index ? 'focused' : ''} ${
+                (item === 'Help' && showHelpPanel) || 
+                (item === 'File' && (showFileExplorer || showNvimEditor)) ? 'active' : ''
+              }`}
+              onClick={() => handleMenuClick(item)}
+              tabIndex={0}
+            >
+              {item}
+            </span>
+          ))}
+        </div>
+
+        <div className="terminal-menubar-right">
+          {/* Country based on IP */}
+          <div className="menubar-telemetry-item" title="Country based on IP">
+            <span className="menubar-telemetry-badge"><RetroIcon name="pin" size="14px" /></span>
+            <span>{ipCountry}</span>
+          </div>
+
+          {/* Live Date & Time Clock */}
+          <div className="menubar-telemetry-item" title="Live System Clock">
+            <span className="menubar-telemetry-badge"><RetroIcon name="clock" size="14px" /></span>
+            <span>{telemetryTime}</span>
+          </div>
+        </div>
       </div>
 
       {/* Main content area - fixed height container */}
@@ -2209,7 +2484,7 @@ default         192.168.1.1     0.0.0.0         UG    100    0        0 eth0
             {showProgressBar ? (
               <div className="loading-progress-container">
                 <div className="hack-header">
-                  <span className="hack-icon">⚠</span>
+                  <span className="hack-icon"><RetroIcon name="warning" size="14px" /></span>
                   <span className="loading-text">{loadingText}<span className="loading-dots">{loadingDots}</span></span>
                 </div>
                 {hackStage && (
@@ -2244,41 +2519,43 @@ default         192.168.1.1     0.0.0.0         UG    100    0        0 eth0
           </div>
         )}
 
-        {/* Current input line */}
-        <form onSubmit={handleSubmit} className="terminal-input-form">
-          <span className="terminal-prompt">guest@portfolio:{currentDir}$</span>
-          <div className="terminal-input-wrapper">
-            <span ref={measureRef} className="terminal-input-measure" aria-hidden="true">
-              {currentInput.slice(0, cursorPosition)}
-            </span>
-            <span className="terminal-input-display" aria-hidden="true">
-              {currentInput}
-            </span>
-            <input
-              ref={inputRef}
-              type="text"
-              value={currentInput}
-              onChange={(e) => {
-                playKeySound();
-                setCurrentInput(e.target.value);
-                setCursorPosition(e.target.selectionStart);
-              }}
-              onKeyDown={handleKeyDown}
-              onKeyUp={(e) => setCursorPosition(e.target.selectionStart)}
-              onClick={(e) => setCursorPosition(e.target.selectionStart)}
-              onSelect={(e) => setCursorPosition(e.target.selectionStart)}
-              className="terminal-input"
-              autoFocus
-              spellCheck={false}
-              autoComplete="off"
-              disabled={isLoading || isTypingOutput}
-            />
-            <span 
-              className="terminal-block-cursor"
-              style={{ left: `${cursorLeft}px` }}
-            ></span>
-          </div>
-        </form>
+        {/* Current input line - hidden during game boot sequence or when arcade/game is active */}
+        {!isGameLoadingPrompt && !isGameActive && (
+          <form onSubmit={handleSubmit} className="terminal-input-form">
+            <span className="terminal-prompt">guest@portfolio:{currentDir}$</span>
+            <div className="terminal-input-wrapper">
+              <span ref={measureRef} className="terminal-input-measure" aria-hidden="true">
+                {currentInput.slice(0, cursorPosition)}
+              </span>
+              <span className="terminal-input-display" aria-hidden="true">
+                {currentInput}
+              </span>
+              <input
+                ref={inputRef}
+                type="text"
+                value={currentInput}
+                onChange={(e) => {
+                  playKeySound();
+                  setCurrentInput(e.target.value);
+                  setCursorPosition(e.target.selectionStart);
+                }}
+                onKeyDown={handleKeyDown}
+                onKeyUp={(e) => setCursorPosition(e.target.selectionStart)}
+                onClick={(e) => setCursorPosition(e.target.selectionStart)}
+                onSelect={(e) => setCursorPosition(e.target.selectionStart)}
+                className="terminal-input"
+                autoFocus
+                spellCheck={false}
+                autoComplete="off"
+                disabled={isLoading || isTypingOutput || isMusicPlayerActive || isGameActive}
+              />
+              <span 
+                className="terminal-block-cursor"
+                style={{ left: `${cursorLeft}px` }}
+              ></span>
+            </div>
+          </form>
+        )}
       </div>
 
         {/* File Explorer - inside main area */}
@@ -2314,6 +2591,58 @@ default         192.168.1.1     0.0.0.0         UG    100    0        0 eth0
           isOpen={showInfoPanel}
           onClose={() => {
             setShowInfoPanel(false);
+            inputRef.current?.focus();
+          }}
+        />
+
+        {/* Retro 1984 Cyber Arcade Cabinet & Boot System */}
+        <Arcade84
+          isOpen={showArcade}
+          initialGame={arcadeInitialGame}
+          onClose={() => {
+            setShowArcade(false);
+            setArcadeInitialGame(null);
+            setIsGameLoadingPrompt(false);
+            inputRef.current?.focus();
+          }}
+        />
+
+        {/* Retro Tetris Arcade Game (Legacy direct) */}
+        <Tetris
+          isOpen={showTetris}
+          onClose={() => {
+            setShowTetris(false);
+            inputRef.current?.focus();
+          }}
+        />
+
+        {/* Retro Chiptune Cassette Deck Music Player */}
+        <MusicPlayer
+          isOpen={showMusicPlayer}
+          isMinimized={isMusicPlayerMinimized}
+          onMinimizedChange={setIsMusicPlayerMinimized}
+          onClose={() => {
+            setShowMusicPlayer(false);
+            setIsMusicPlayerMinimized(false);
+            inputRef.current?.focus();
+          }}
+        />
+
+        {/* Cyber World Map & 3D Globe Telemetry HUD */}
+        <CyberMapModal
+          isOpen={showCyberMap}
+          initialMode={cyberMapMode}
+          onClose={() => {
+            setShowCyberMap(false);
+            inputRef.current?.focus();
+          }}
+        />
+
+        {/* Ubuntu top Interactive Task Manager */}
+        <TopTaskManager
+          isOpen={showTopTaskManager}
+          onClose={() => {
+            setShowTopTaskManager(false);
             inputRef.current?.focus();
           }}
         />

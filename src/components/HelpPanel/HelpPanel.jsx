@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { playKeySound, playEnterSound } from '../../utils/sounds';
+import RetroIcon from '../RetroIcon';
 import './HelpPanel.css';
 
 const HelpPanel = ({ isOpen, onClose }) => {
@@ -13,13 +14,13 @@ const HelpPanel = ({ isOpen, onClose }) => {
     { id: 'commands', label: 'Commands', icon: '>' },
     { id: 'shortcuts', label: 'Shortcuts', icon: '⌨' },
     { id: 'themes', label: 'Themes', icon: '◐' },
-    { id: 'credits', label: 'Credits', icon: '♥' },
+    { id: 'credits', label: 'Credits', icon: <RetroIcon name="heart" size="13px" /> },
   ];
 
   const commandCategories = {
     portfolio: {
       title: 'Portfolio Commands',
-      icon: '📁',
+      icon: <RetroIcon name="folder" size="16px" />,
       commands: [
         { cmd: 'help', desc: 'Open this help panel' },
         { cmd: 'profile / dossier', desc: 'Open surveillance-style profile' },
@@ -33,7 +34,7 @@ const HelpPanel = ({ isOpen, onClose }) => {
     },
     filesystem: {
       title: 'File System',
-      icon: '📂',
+      icon: <RetroIcon name="folder-open" size="16px" />,
       commands: [
         { cmd: 'ls / dir', desc: 'List directory contents' },
         { cmd: 'cd <dir>', desc: 'Change directory' },
@@ -49,7 +50,7 @@ const HelpPanel = ({ isOpen, onClose }) => {
     },
     editor: {
       title: 'Editor Commands',
-      icon: '✎',
+      icon: <RetroIcon name="editor" size="16px" />,
       commands: [
         { cmd: 'nvim <file>', desc: 'Open file in Neovim editor' },
         { cmd: 'vim <file>', desc: 'Open file in Vim editor' },
@@ -59,7 +60,7 @@ const HelpPanel = ({ isOpen, onClose }) => {
     },
     textProcessing: {
       title: 'Text Processing',
-      icon: '📝',
+      icon: <RetroIcon name="document" size="16px" />,
       commands: [
         { cmd: 'head <file>', desc: 'Show first lines of file' },
         { cmd: 'tail <file>', desc: 'Show last lines of file' },
@@ -71,7 +72,7 @@ const HelpPanel = ({ isOpen, onClose }) => {
     },
     system: {
       title: 'System Commands',
-      icon: '⚙',
+      icon: <RetroIcon name="system" size="16px" />,
       commands: [
         { cmd: 'clear / cls', desc: 'Clear the terminal' },
         { cmd: 'history', desc: 'Show command history' },
@@ -81,15 +82,17 @@ const HelpPanel = ({ isOpen, onClose }) => {
         { cmd: 'date', desc: 'Show current date/time' },
         { cmd: 'uptime', desc: 'System uptime' },
         { cmd: 'df', desc: 'Disk space usage' },
-        { cmd: 'free', desc: 'Memory usage' },
-        { cmd: 'ps / top / htop', desc: 'Process information' },
+        { cmd: 'top / htop', desc: 'Interactive Ubuntu task manager' },
+        { cmd: 'ps', desc: 'Process snapshot' },
         { cmd: 'neofetch', desc: 'System info display' },
       ]
     },
     networking: {
-      title: 'Networking',
-      icon: '🌐',
+      title: 'Networking & Telemetry',
+      icon: <RetroIcon name="globe" size="16px" />,
       commands: [
+        { cmd: 'map / radar', desc: 'Cyber World Map telemetry HUD' },
+        { cmd: 'globe', desc: 'Interactive 3D rotating ASCII globe' },
         { cmd: 'ping <host>', desc: 'Send ICMP packets to host' },
         { cmd: 'ifconfig / ip addr', desc: 'Network interface config' },
         { cmd: 'netstat / ss', desc: 'Network connections' },
@@ -105,9 +108,15 @@ const HelpPanel = ({ isOpen, onClose }) => {
       ]
     },
     fun: {
-      title: 'Fun Commands',
-      icon: '🎮',
+      title: 'Fun & Arcade Commands',
+      icon: <RetroIcon name="gamepad" size="16px" />,
       commands: [
+        { cmd: 'game / arcade', desc: '1984 Retro Arcade Cabinet & Boot System' },
+        { cmd: 'tetris', desc: 'Soviet 1984 Brick Stacker' },
+        { cmd: 'snake', desc: 'Cyber Neon Snake 84' },
+        { cmd: 'invaders', desc: 'Space Invaders 84 Galaxy Defense' },
+        { cmd: 'pong', desc: 'Pong 84 CRT Cyber Battle' },
+        { cmd: 'music / radio', desc: '8-Bit Chiptune Cassette Deck player' },
         { cmd: 'cowsay <text>', desc: 'Make a cow say something' },
         { cmd: 'fortune', desc: 'Random fortune message' },
         { cmd: 'cal', desc: 'Show calendar' },
@@ -116,7 +125,7 @@ const HelpPanel = ({ isOpen, onClose }) => {
     },
     session: {
       title: 'Session',
-      icon: '⏻',
+      icon: <RetroIcon name="power" size="16px" />,
       commands: [
         { cmd: 'theme', desc: 'Change color theme' },
         { cmd: 'sound', desc: 'Toggle sound effects' },
@@ -286,7 +295,7 @@ const HelpPanel = ({ isOpen, onClose }) => {
 
       <div className="about-block version-info">
         <p>Version: 3.0.0 | Build: 2024.12.04</p>
-        <p>Made with ♥ and lots of phosphor glow</p>
+        <p>Made with <RetroIcon name="heart" size="13px" /> and lots of phosphor glow</p>
       </div>
     </div>
   );
@@ -405,7 +414,7 @@ const HelpPanel = ({ isOpen, onClose }) => {
       </div>
 
       <div className="theme-tip">
-        <p>💡 Tip: Click a theme card to apply it instantly, or type <span className="cmd-highlight">theme</span> in the terminal to cycle.</p>
+        <p><RetroIcon name="bulb" size="14px" /> Tip: Click a theme card to apply it instantly, or type <span className="cmd-highlight">theme</span> in the terminal to cycle.</p>
       </div>
     </div>
   );

@@ -3,6 +3,8 @@ import CRTMonitor from './components/CRTMonitor';
 import Terminal from './components/Terminal';
 import { useTheme } from './components/ThemeSwitcher';
 import { playThemeSwitchSound, playErrorSound, startAmbientNoise, stopAmbientNoise, initAudio, playCRTOnSound, playCRTOffSound, toggleAllSounds } from './utils/sounds';
+import { stopTrack } from './components/MusicPlayer/chiptuneSynth';
+import { stopTetrisMusic } from './components/Tetris/tetrisAudio';
 import BootScreen from './components/BootScreen';
 import MobileWarning from './components/MobileWarning';
 import { 
@@ -45,15 +47,17 @@ function App() {
     }, 600);
   };
 
-  // Handle power button press - turn off
+  // Handle power button press - turn off and stop everything
   const handlePowerOff = () => {
-    // Play power off sound
+    // 1. Play power off sound
     playCRTOffSound();
     
-    // Stop ambient noise
-    stopAmbientNoise();
+    // 2. Stop music player, YouTube video streams, chiptune synths, and ambient noise
+    try { stopTrack(); } catch (e) {}
+    try { stopTetrisMusic(); } catch (e) {}
+    try { stopAmbientNoise(); } catch (e) {}
     
-    // Reset states
+    // 3. Reset and unmount all active screens and processes
     setShowBootScreen(false);
     setShowTerminal(false);
   };
@@ -139,9 +143,25 @@ function App() {
   ╚═╝  ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝ 
 `;
       
+      case 'tetris':
+      case 'play tetris':
+      case 'game tetris':
+      case 'music':
+      case 'radio':
+      case 'player':
+      case 'map':
+      case 'worldmap':
+      case 'radar':
+      case 'globe':
+      case 'top':
+      case 'htop':
+      case 'taskmanager':
+        // Handled by Terminal component modal
+        return null;
+        
       case 'sudo':
       case 'sudo rm -rf':
-        return 'Nice try! 😄';
+        return 'Nice try! [^_^] Access Denied.';
       
       case 'hack':
       case 'matrix':
@@ -173,7 +193,7 @@ Type 'help' for available commands.
 
       case 'coffee':
         return `
-  Here's your coffee! ☕
+  Here's your coffee! [~_~]
   
       ( (
        ) )
