@@ -62,6 +62,6 @@ const youtubeSearchPlugin = () => ({
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), youtubeSearchPlugin()],
-  base: '/Retro-Term-3000'
+  base: '/Retro-Term-3000/',
 })
 
