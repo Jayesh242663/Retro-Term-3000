@@ -161,10 +161,15 @@ export const searchYouTubeTracks = async (query) => {
   const lyricSearchQuery = lowerQuery.includes('lyric') ? cleanQuery : `${cleanQuery} lyrics`;
   let ytResults = [];
 
-  // A. Try Vite dev server YouTube search endpoint
+  // A. Try API endpoint (uses Vercel serverless API if hosted on GitHub Pages)
   try {
-    const res = await fetch(`/api/yt-search?q=${encodeURIComponent(lyricSearchQuery)}`, {
-      signal: AbortSignal.timeout(3500),
+    const isGitHubPages = typeof window !== 'undefined' && window.location.hostname.includes('github.io');
+    const apiEndpoint = isGitHubPages
+      ? `https://retro-term-3000.vercel.app/api/yt-search?q=${encodeURIComponent(lyricSearchQuery)}`
+      : `/api/yt-search?q=${encodeURIComponent(lyricSearchQuery)}`;
+
+    const res = await fetch(apiEndpoint, {
+      signal: AbortSignal.timeout(4500),
     });
     if (res.ok) {
       const data = await res.json();
